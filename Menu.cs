@@ -23,11 +23,11 @@ namespace Menu
                     $"===================\n" +
                     $"{(cursorPos == 0 ? "> " : "  ")}Start\n" +
                     $"Handling: \n"+
-                    $"{(cursorPos == 1 ? "> " : "  ")}DAS: {Controls.das}\n" +
-                    $"{(cursorPos == 2 ? "> " : "  ")}ARR: {Controls.arr}\n" +
-                    $"{(cursorPos == 3 ? "> " : "  ")}Soft Drop Mode: {(Controls.useSonicDrop ? "instant" : "normal")}\n" +
+                    $"{(cursorPos == 1 ? "> " : "  ")}DAS: {Controls.das} - Default: 10\n" +
+                    $"{(cursorPos == 2 ? "> " : "  ")}ARR: {Controls.arr} - Default: 1\n" +
+                    $"{(cursorPos == 3 ? "> " : "  ")}Soft Drop Mode: {(Controls.useSonicDrop ? "instant" : "normal")} - Default: normal\n" +
                     $"Controls: \n" +
-                    $"{(cursorPos == 4 ? "> " : "  ")}Left: {Controls.left}\n" +
+                    $"{(cursorPos == 4 ? "> " : "  ")}Left: {Controls.left} - Default: Left Arrow (37)\n" +
                     $"{(cursorPos == 5 ? "> " : "  ")}Right: {Controls.right}\n" +
                     $"{(cursorPos == 6 ? "> " : "  ")}Hard Drop: {Controls.hardDrop}\n" +
                     $"{(cursorPos == 7 ? "> " : "  ")}Soft Drop: {Controls.softDrop}\n" +
