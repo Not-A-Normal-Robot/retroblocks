@@ -20,14 +20,14 @@ namespace Menu
                 $"{(cursorPos == 2 ? "> " : "  ")}ARR: {Controls.arr}\n" +
                 $"{(cursorPos == 3 ? "> " : "  ")}Soft Drop Mode: {(Controls.useSonicDrop ? "instant" : "normal")}\n" +
                 $"Controls: \n"+
-                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
-                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
-                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
-                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
-                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
-                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
-                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
-                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
+                $"{(cursorPos == 4 ? "> " : "  ")}Left: {Controls.left}\n" +
+                $"{(cursorPos == 5 ? "> " : "  ")}Left: {Controls.right}\n" +
+                $"{(cursorPos == 6 ? "> " : "  ")}Left: {Controls.hardDrop}\n" +
+                $"{(cursorPos == 7 ? "> " : "  ")}Left: {Controls.softDrop}\n" +
+                $"{(cursorPos == 8 ? "> " : "  ")}Left: {Controls.rotCw}\n" +
+                $"{(cursorPos == 9 ? "> " : "  ")}Left: {Controls.rotCcw}\n" +
+                $"{(cursorPos == 10? "> " : "  ")}Left: {Controls.rot180}\n" +
+                $"{(cursorPos == 11? "> " : "  ")}Left: {Controls.hold}\n" +
                 $"Scores:\n" +
                 $"{HighScores.Scores[0]}\n" +
                 $"{HighScores.Scores[1]}\n" +
