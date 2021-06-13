@@ -78,6 +78,47 @@ namespace Menu
                             cursorPos--;
                             break;
                         }
+                        break;
+                    case 2:
+                        if (NativeKeyboard.IsKeyDown(39) && Controls.das < 20 && !prevFrameInputs[39])
+                        {
+                            Controls.das++;
+                        }
+                        if (NativeKeyboard.IsKeyDown(37) && Controls.das > 1 && !prevFrameInputs[37])
+                        {
+                            Controls.das--;
+                        }
+                        if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                        {
+                            cursorPos++;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
+                        {
+                            cursorPos--;
+                            break;
+                        }
+                        break;
+                    case 1:
+                        if (NativeKeyboard.IsKeyDown(39) && Controls.das < 20 && !prevFrameInputs[39])
+                        {
+                            Controls.das++;
+                        }
+                        if (NativeKeyboard.IsKeyDown(37) && Controls.das > 1 && !prevFrameInputs[37])
+                        {
+                            Controls.das--;
+                        }
+                        if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                        {
+                            cursorPos++;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
+                        {
+                            cursorPos--;
+                            break;
+                        }
+                        break;
                 }
                 for(int i = 0; i < prevFrameInputs.Length; i++)
                 {
