@@ -8,8 +8,11 @@ namespace Menu
         static int cursorPos;
         const int maxCursorPos = 11;
         static bool start;
+        static bool[] prevFrameInputs;
         public static void Start()
         {
+            start = false;
+            prevFrameInputs = new bool[100];
             cursorPos = 0;
             HighScores.LoadScores();
             Controls.LoadControls();
@@ -43,8 +46,45 @@ namespace Menu
                     $"{HighScores.Scores[4]}\n"
                     );
                 #endregion
-
+                switch (cursorPos)
+                {
+                    case 0:
+                        if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                        {
+                            cursorPos++;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(13))
+                        {
+                            start = true;
+                        }
+                        break;
+                    case 1:
+                        if (NativeKeyboard.IsKeyDown(39) && Controls.das < 20 && !prevFrameInputs[39])
+                        {
+                            Controls.das++;
+                        }
+                        if(NativeKeyboard.IsKeyDown(37) && Controls.das > 1 && !prevFrameInputs[37])
+                        {
+                            Controls.das--;
+                        }
+                        if(NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                        {
+                            cursorPos++;
+                            break;
+                        }
+                        if(NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
+                        {
+                            cursorPos--;
+                            break;
+                        }
+                }
+                for(int i = 0; i < prevFrameInputs.Length; i++)
+                {
+                    prevFrameInputs[i] = NativeKeyboard.IsKeyDown(i);
+                }
             }
+            start = false;
         }
     }
 }
