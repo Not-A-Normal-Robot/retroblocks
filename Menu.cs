@@ -29,7 +29,7 @@ namespace Menu
                     $"Controls: \n" +
                     $"{(cursorPos == 4 ? "> " : "  ")}Left: {Controls.left} - Default: Left Arrow (37)\n" +
                     $"{(cursorPos == 5 ? "> " : "  ")}Right: {Controls.right} - Default: Right Arrow (39)\n" +
-                    $"{(cursorPos == 6 ? "> " : "  ")}Hard Drop: {Controls.hardDrop}\n" +
+                    $"{(cursorPos == 6 ? "> " : "  ")}Hard Drop: {Controls.hardDrop} - Default: Space (32)\n" +
                     $"{(cursorPos == 7 ? "> " : "  ")}Soft Drop: {Controls.softDrop}\n" +
                     $"{(cursorPos == 8 ? "> " : "  ")}Rotate Clockwise: {Controls.rotCw}\n" +
                     $"{(cursorPos == 9 ? "> " : "  ")}Rotate Counterclockwise: {Controls.rotCcw}\n" +
