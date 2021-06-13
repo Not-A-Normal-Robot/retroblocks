@@ -18,9 +18,16 @@ namespace Menu
                 $"{(cursorPos == 0 ? "> " : "  ")}Start\n" +
                 $"{(cursorPos == 1 ? "> " : "  ")}DAS: {Controls.das}\n" +
                 $"{(cursorPos == 2 ? "> " : "  ")}ARR: {Controls.arr}\n" +
-                $"{(cursorPos == 2 ? "> " : "  ")}Soft Drop Mode: {(Controls.useSonicDrop ? "instant" : "normal")}\n" +
-                $"{(cursorPos == 2 ? "> " : "  ")}ARR\n" +
-                $"{(cursorPos == 2 ? "> " : "  ")}ARR\n" +
+                $"{(cursorPos == 3 ? "> " : "  ")}Soft Drop Mode: {(Controls.useSonicDrop ? "instant" : "normal")}\n" +
+                $"Controls: \n"+
+                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
+                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
+                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
+                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
+                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
+                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
+                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
+                $"{(cursorPos == 4 ? "> " : "  ")}Left: {(ConsoleKey)Controls.left}\n" +
                 $"Scores:\n" +
                 $"{HighScores.Scores[0]}\n" +
                 $"{HighScores.Scores[1]}\n" +
