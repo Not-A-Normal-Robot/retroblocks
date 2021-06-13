@@ -3,5 +3,5 @@
 **Warning: This project is currently in alpha. Expect lots of bugs!**
 
 # Building
-Open retroblocks.sln with Visual Studio to open it.
+Open retroblocks.csproj with Visual Studio to open it.
 You can google the rest of the steps.
