@@ -929,7 +929,6 @@ namespace Game
             das = 10;
             arr = 1;
             useSonicDrop = false;
-
             SaveControls();
         }
     }

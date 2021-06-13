@@ -49,6 +49,7 @@ namespace Menu
                 switch (cursorPos)
                 {
                     case 0:
+                        #region Start
                         if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
                         {
                             cursorPos++;
@@ -59,7 +60,9 @@ namespace Menu
                             start = true;
                         }
                         break;
+                    #endregion
                     case 1:
+                        #region DAS
                         if (NativeKeyboard.IsKeyDown(39) && Controls.das < 20 && !prevFrameInputs[39])
                         {
                             Controls.das++;
@@ -79,32 +82,14 @@ namespace Menu
                             break;
                         }
                         break;
+                    #endregion
                     case 2:
-                        if (NativeKeyboard.IsKeyDown(39) && Controls.das < 20 && !prevFrameInputs[39])
+                        #region ARR
+                        if (NativeKeyboard.IsKeyDown(39) && Controls.arr < 15 && !prevFrameInputs[39])
                         {
-                            Controls.das++;
+                            Controls.arr++;
                         }
-                        if (NativeKeyboard.IsKeyDown(37) && Controls.das > 1 && !prevFrameInputs[37])
-                        {
-                            Controls.das--;
-                        }
-                        if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
-                        {
-                            cursorPos++;
-                            break;
-                        }
-                        if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
-                        {
-                            cursorPos--;
-                            break;
-                        }
-                        break;
-                    case 1:
-                        if (NativeKeyboard.IsKeyDown(39) && Controls.das < 20 && !prevFrameInputs[39])
-                        {
-                            Controls.das++;
-                        }
-                        if (NativeKeyboard.IsKeyDown(37) && Controls.das > 1 && !prevFrameInputs[37])
+                        if (NativeKeyboard.IsKeyDown(37) && Controls.arr > 0 && !prevFrameInputs[37])
                         {
                             Controls.das--;
                         }
@@ -119,8 +104,31 @@ namespace Menu
                             break;
                         }
                         break;
+                    #endregion
+                    case 3:
+                        #region Sonic Drop
+                        if (NativeKeyboard.IsKeyDown(39) &&!prevFrameInputs[39])
+                        {
+                            Controls.useSonicDrop = !Controls.useSonicDrop;
+                        }
+                        if (NativeKeyboard.IsKeyDown(37) && !prevFrameInputs[37])
+                        {
+                            Controls.useSonicDrop = !Controls.useSonicDrop;
+                        }
+                        if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                        {
+                            cursorPos++;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
+                        {
+                            cursorPos--;
+                            break;
+                        }
+                        break;
+                        #endregion
                 }
-                for(int i = 0; i < prevFrameInputs.Length; i++)
+                for (int i = 0; i < prevFrameInputs.Length; i++)
                 {
                     prevFrameInputs[i] = NativeKeyboard.IsKeyDown(i);
                 }
