@@ -28,7 +28,7 @@ namespace Menu
                     $"{(cursorPos == 3 ? "> " : "  ")}Soft Drop Mode: {(Controls.useSonicDrop ? "instant" : "normal")} - Default: normal\n" +
                     $"Controls: \n" +
                     $"{(cursorPos == 4 ? "> " : "  ")}Left: {Controls.left} - Default: Left Arrow (37)\n" +
-                    $"{(cursorPos == 5 ? "> " : "  ")}Right: {Controls.right}\n" +
+                    $"{(cursorPos == 5 ? "> " : "  ")}Right: {Controls.right} - Default: Right Arrow (39)\n" +
                     $"{(cursorPos == 6 ? "> " : "  ")}Hard Drop: {Controls.hardDrop}\n" +
                     $"{(cursorPos == 7 ? "> " : "  ")}Soft Drop: {Controls.softDrop}\n" +
                     $"{(cursorPos == 8 ? "> " : "  ")}Rotate Clockwise: {Controls.rotCw}\n" +
