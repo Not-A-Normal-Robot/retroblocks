@@ -142,8 +142,6 @@ namespace Game
         private static Timer lockDelayTimer;
         public static int lines;
         public static int lockDelayResets;
-        public static int das;
-        public static int arr;
         public static bool useSonicDrop;
         public static int levelNum {
             get
@@ -183,10 +181,10 @@ namespace Game
             }
             piece = BagRandomizer.output[BagRandomizer.current][0];
             piecenum = 0;
-            das = 8;
-            arr = 0;
-            leftDasTimer = das;
-            rightDasTimer = das;
+            Controls.das = 8;
+            Controls.arr = 0;
+            leftDasTimer = Controls.das;
+            rightDasTimer = Controls.das;
             Spawn();
             gravTimer = new Timer(1 / level.g * 16.6666);
             gravTimer.AutoReset = true;
@@ -297,7 +295,7 @@ namespace Game
         }
         public static void DasLeft(object o, ElapsedEventArgs _)
         {
-            if(arr == 0)
+            if(Controls.arr == 0)
             {
                 Left();
                 Left();
@@ -311,12 +309,12 @@ namespace Game
             else
             {
                 Left();
-                leftDasTimer = arr;
+                leftDasTimer = Controls.arr;
             }
         }
         public static void DasRight(object o, ElapsedEventArgs _)
         {
-            if (arr == 0)
+            if (Controls.arr == 0)
             {
                 Right();
                 Right();
@@ -330,16 +328,16 @@ namespace Game
             else
             {
                 Right();
-                rightDasTimer = arr;
+                rightDasTimer = Controls.arr;
             }
         }
         public static void CancelLeftDas()
         {
-            leftDasTimer = das;
+            leftDasTimer = Controls.das;
         }
         public static void CancelRightDas()
         {
-            rightDasTimer = das;
+            rightDasTimer = Controls.das;
         }
         /// <summary>
         /// Get info of a future piece, up to 7 pieces
@@ -557,20 +555,10 @@ namespace Game
             }
             else
             {
-                Console.WriteLine($"[ ==========PAUSED========== ]\n" +
-                    $"Press Esc to unpause\n" +
-                    $"Adjust DAS with - and = (currently, DAS is set to {CurrentPiece.das}f ({CurrentPiece.das * 16.6}ms))\n" +
-                    $"Adjust ARR with [ and ] (currently, ARR is set to {CurrentPiece.arr}f ({CurrentPiece.arr * 16.6}ms))\n" +
-                    $"Toggle Sonic Drop (Instant Soft Drop) with \\ (currently {(CurrentPiece.useSonicDrop? "on" : "off")})\n" +
-                    $"Controls:\n" +
-                    $"Up: Rotate Clockwise\n" +
-                    $"Down: Soft Drop / Sonic Drop\n" +
-                    $"Left: Left\n" +
-                    $"Right: Right\n" +
-                    $"Z: Rotate Counterclockwise\n" +
-                    $"X: Rotate 180°\n" +
-                    $"C: Hold\n" +
-                    $"Space: Hard Drop");
+                Console.Write($"[ ==========PAUSED========== ]\n" +
+                    $"Press Esc to unpause\n" + 
+                    $"Press R to restart\n"
+                    );
             }
         }
         private static void DrawHoldPiece()
@@ -856,6 +844,9 @@ namespace Game
         public static int rotCw;
         public static int rotCcw;
         public static int rot180;
+        public static int das;
+        public static int arr;
+        public static bool useSonicDrop;
         public static int[] buttons
         {
             get
@@ -870,21 +861,15 @@ namespace Game
         {
             if (!File.Exists("%appdata%\\Retroblocks\\config.txt"))
             {
-                left = 37;
-                right = 39;
-                hardDrop = 32;
-                softDrop = 40;
-                rotCw = 38;
-                rotCcw = 90;
-                rot180 = 88;
-
-                SaveControls();
+                ResetControls();
             }
             else
             {
-                StreamReader reader = new StreamReader("%appdata%\\Retroblocks\\config.txt");
+               
                 try
                 {
+                    #region Get controls
+                    StreamReader reader = new StreamReader("%appdata%\\Retroblocks\\config.txt");
                     left = Convert.ToInt32(reader.ReadLine());
                     right = Convert.ToInt32(reader.ReadLine());
                     hardDrop = Convert.ToInt32(reader.ReadLine());
@@ -892,6 +877,9 @@ namespace Game
                     rotCw = Convert.ToInt32(reader.ReadLine());
                     rotCcw = Convert.ToInt32(reader.ReadLine());
                     rot180 = Convert.ToInt32(reader.ReadLine());
+                    das = Convert.ToInt32(reader.ReadLine());
+                    arr = Convert.ToInt32(reader.ReadLine());
+                    useSonicDrop = Convert.ToBoolean(reader.ReadLine());
 
                     // Checks for duplicates
                     if (buttons.GroupBy(x => x).Any(g => g.Count() > 1))
@@ -906,23 +894,17 @@ namespace Game
 
                         SaveControls();
                     }
+                    #endregion
                 }
                 catch
                 {
-                    left = 37;
-                    right = 39;
-                    hardDrop = 32;
-                    softDrop = 40;
-                    rotCw = 38;
-                    rotCcw = 90;
-                    rot180 = 88;
-
-                    SaveControls();
+                    ResetControls();
                 }
             }
         }
         public static void SaveControls()
         {
+            #region Check for file
             if (!File.Exists("%appdata%\\Retroblocks\\config.txt"))
             {
                 if (!Directory.Exists("%appdata%\\Retroblocks"))
@@ -931,9 +913,27 @@ namespace Game
                 }
                 File.Create("%appdata%\\Retroblocks\\config.txt");
             }
+            #endregion
+            #region Save
             StreamWriter writer = new StreamWriter("%appdata%\\Retroblocks\\config.txt");
-            writer.Write($"{left}\n{right}\n{hardDrop}\n{softDrop}\n{rotCw}\n{rotCcw}\n{rot180}");
+            writer.Write($"{left}\n{right}\n{hardDrop}\n{softDrop}\n{rotCw}\n{rotCcw}\n{rot180}\n{das}\n{arr}");
             writer.Close();
+            #endregion
+        }
+        private static void ResetControls()
+        {
+            left = 37;
+            right = 39;
+            hardDrop = 32;
+            softDrop = 40;
+            rotCw = 38;
+            rotCcw = 90;
+            rot180 = 88;
+            das = 10;
+            arr = 1;
+            useSonicDrop = false;
+
+            SaveControls();
         }
     }
 }
@@ -973,22 +973,16 @@ internal static class NativeKeyboard
 public static class HighScores
 {
     public static int[] Scores;
-
     public static void LoadScores()
     {
         string dataLoc = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         if (!File.Exists(dataLoc + "\\Retroblocks\\scores.txt"))
         {
-            #region Reset scores
             if (!Directory.Exists(dataLoc + "\\Retroblocks"))
             {
                 Directory.CreateDirectory(dataLoc + "\\Retroblocks");
             }
-            StreamWriter writer = new StreamWriter(File.Create(dataLoc + "\\Retroblocks\\scores.txt"));
-            writer.Write($"10000\n8000\n5000\n4000\n2000");
-            writer.Close();
-            Scores = new int[5] { 10000, 8000, 5000, 4000, 2000 };
-            #endregion
+            ResetScores();
         }
         else
         {
@@ -1004,23 +998,14 @@ public static class HighScores
             }
             catch
             {
-                #region Reset scores
-                if (!Directory.Exists(dataLoc + "\\Retroblocks"))
-                {
-                    Directory.CreateDirectory(dataLoc + "\\Retroblocks");
-                }
-                StreamWriter writer = new StreamWriter(File.Create(dataLoc + "\\Retroblocks\\scores.txt"));
-                writer.Write($"10000\n8000\n5000\n4000\n2000");
-                writer.Close();
-                Scores = new int[5] { 10000, 8000, 5000, 4000, 2000 };
-                #endregion
+                ResetScores();
             }
         }
     }
     public static void SaveScore(int score)
     {
         string dataLoc = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        #region Get score list
+            #region Get score list
         Array.Sort(Scores);
         Array.Reverse(Scores);
         if(score > Scores[5])
@@ -1037,15 +1022,39 @@ public static class HighScores
             {
                 Scores[i] = newScores[i];
             }
+            #endregion
+            #region Check for directory
             if (!Directory.Exists(dataLoc + "\\Retroblocks"))
             {
                 Directory.CreateDirectory(dataLoc + "\\Retroblocks");
             }
-        #endregion
-            File.Create(dataLoc + "\\Retroblocks\\scores.txt");
-            StreamWriter writer = new StreamWriter(dataLoc + "\\Retroblocks\\scores.txt");
+            #endregion
+            #region Save
+            StreamWriter writer = new StreamWriter(File.Create(dataLoc + "\\Retroblocks\\scores.txt"));
             writer.Write($"{Scores[0]}\n{Scores[1]}\n{Scores[2]}\n{Scores[3]}\n{Scores[4]}\n");
             writer.Close();
+            #endregion
         }
+    }
+    private static void SaveScores()
+    {
+        string dataLoc = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        #region Check for directory
+        if (!Directory.Exists(dataLoc + "\\Retroblocks"))
+        {
+            Directory.CreateDirectory(dataLoc + "\\Retroblocks");
+        }
+        #endregion
+        #region Save
+        StreamWriter writer = new StreamWriter(File.Create(dataLoc + "\\Retroblocks\\scores.txt"));
+        writer.Write($"{Scores[0]}\n{Scores[1]}\n{Scores[2]}\n{Scores[3]}\n{Scores[4]}\n");
+        writer.Close();
+        #endregion
+
+    }
+    private static void ResetScores()
+    {
+        Scores = new int[5] { 10000, 8000, 5000, 4000, 2000 };
+        SaveScores();
     }
 }
