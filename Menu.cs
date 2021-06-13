@@ -31,7 +31,7 @@ namespace Menu
                     $"{(cursorPos == 5 ? "> " : "  ")}Right: {Controls.right} - Default: Right Arrow (39)\n" +
                     $"{(cursorPos == 6 ? "> " : "  ")}Hard Drop: {Controls.hardDrop} - Default: Space (32)\n" +
                     $"{(cursorPos == 7 ? "> " : "  ")}Soft Drop: {Controls.softDrop} - Default: Down Arrow (40)\n" +
-                    $"{(cursorPos == 8 ? "> " : "  ")}Rotate Clockwise: {Controls.rotCw}\n" +
+                    $"{(cursorPos == 8 ? "> " : "  ")}Rotate Clockwise: {Controls.rotCw} - Default: Up Arrow (38)\n" +
                     $"{(cursorPos == 9 ? "> " : "  ")}Rotate Counterclockwise: {Controls.rotCcw}\n" +
                     $"{(cursorPos == 10 ? "> " : "  ")}Rotate 180: {Controls.rot180}\n" +
                     $"{(cursorPos == 11 ? "> " : "  ")}Hold: {Controls.hold}\n" +
