@@ -34,7 +34,7 @@ namespace Menu
                     $"{(cursorPos == 8 ? "> " : "  ")}Rotate Clockwise: {Controls.rotCw} - Default: Up Arrow (38)\n" +
                     $"{(cursorPos == 9 ? "> " : "  ")}Rotate Counterclockwise: {Controls.rotCcw} - Default: Z (90)\n" +
                     $"{(cursorPos == 10 ? "> " : "  ")}Rotate 180: {Controls.rot180} - Default: X (88)\n" +
-                    $"{(cursorPos == 11 ? "> " : "  ")}Hold: {Controls.hold}\n" +
+                    $"{(cursorPos == 11 ? "> " : "  ")}Hold: {Controls.hold} - Default: C (67)\n" +
                     $"Scores:\n" +
                     $"{HighScores.Scores[0]}\n" +
                     $"{HighScores.Scores[1]}\n" +
