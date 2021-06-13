@@ -18,6 +18,7 @@ namespace Game
             #region Setup console
             DisableQuickEdit(null, null);
             Console.CursorVisible = false;
+            Console.ForegroundColor = ConsoleColor.Green;
             #endregion
             #region Main Menu
             Menu.Main.Start();
@@ -971,6 +972,7 @@ public static class HighScores
     public static int[] Scores;
     public static void LoadScores()
     {
+        Scores = new int[5];
         string dataLoc = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         if (!File.Exists(dataLoc + "\\Retroblocks\\scores.txt"))
         {
