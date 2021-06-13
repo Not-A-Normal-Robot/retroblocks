@@ -15,6 +15,8 @@ namespace Menu
             Controls.LoadControls();
             while (!start)
             {
+                #region Draw screen
+                Console.SetCursorPosition(0, 0);
                 Console.Write(
                     $"===================\n" +
                     $"||  RETROBLOCKS  ||\n" +
@@ -26,13 +28,13 @@ namespace Menu
                     $"{(cursorPos == 3 ? "> " : "  ")}Soft Drop Mode: {(Controls.useSonicDrop ? "instant" : "normal")}\n" +
                     $"Controls: \n" +
                     $"{(cursorPos == 4 ? "> " : "  ")}Left: {Controls.left}\n" +
-                    $"{(cursorPos == 5 ? "> " : "  ")}Left: {Controls.right}\n" +
-                    $"{(cursorPos == 6 ? "> " : "  ")}Left: {Controls.hardDrop}\n" +
-                    $"{(cursorPos == 7 ? "> " : "  ")}Left: {Controls.softDrop}\n" +
-                    $"{(cursorPos == 8 ? "> " : "  ")}Left: {Controls.rotCw}\n" +
-                    $"{(cursorPos == 9 ? "> " : "  ")}Left: {Controls.rotCcw}\n" +
-                    $"{(cursorPos == 10 ? "> " : "  ")}Left: {Controls.rot180}\n" +
-                    $"{(cursorPos == 11 ? "> " : "  ")}Left: {Controls.hold}\n" +
+                    $"{(cursorPos == 5 ? "> " : "  ")}Right: {Controls.right}\n" +
+                    $"{(cursorPos == 6 ? "> " : "  ")}Hard Drop: {Controls.hardDrop}\n" +
+                    $"{(cursorPos == 7 ? "> " : "  ")}Soft Drop: {Controls.softDrop}\n" +
+                    $"{(cursorPos == 8 ? "> " : "  ")}Rotate Clockwise: {Controls.rotCw}\n" +
+                    $"{(cursorPos == 9 ? "> " : "  ")}Rotate Counterclockwise: {Controls.rotCcw}\n" +
+                    $"{(cursorPos == 10 ? "> " : "  ")}Rotate 180: {Controls.rot180}\n" +
+                    $"{(cursorPos == 11 ? "> " : "  ")}Hold: {Controls.hold}\n" +
                     $"Scores:\n" +
                     $"{HighScores.Scores[0]}\n" +
                     $"{HighScores.Scores[1]}\n" +
@@ -40,6 +42,8 @@ namespace Menu
                     $"{HighScores.Scores[3]}\n" +
                     $"{HighScores.Scores[4]}\n"
                     );
+                #endregion
+
             }
         }
     }
