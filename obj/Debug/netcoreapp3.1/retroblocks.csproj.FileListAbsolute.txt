@@ -1,0 +1,13 @@
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\retroblocks.exe
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\retroblocks.deps.json
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\retroblocks.runtimeconfig.json
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\retroblocks.runtimeconfig.dev.json
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\retroblocks.dll
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\retroblocks.pdb
+D:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.csprojAssemblyReference.cache
+D:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.AssemblyInfoInputs.cache
+D:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.AssemblyInfo.cs
+D:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.csproj.CoreCompileInputs.cache
+D:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.dll
+D:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.pdb
+D:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.genruntimeconfig.cache
