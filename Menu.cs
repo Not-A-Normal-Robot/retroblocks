@@ -10,11 +10,11 @@ namespace Menu
         static bool start;
         public static void Start()
         {
+            cursorPos = 0;
+            HighScores.LoadScores();
+            Controls.LoadControls();
             while (!start)
             {
-                cursorPos = 0;
-                HighScores.LoadScores();
-                Controls.LoadControls();
                 Console.Write(
                     $"===================\n" +
                     $"||  RETROBLOCKS  ||\n" +
