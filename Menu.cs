@@ -126,6 +126,23 @@ namespace Menu
                             break;
                         }
                         break;
+                    #endregion
+                    case 4:
+                        #region Left
+                        if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                        {
+                            cursorPos++;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
+                        {
+                            cursorPos--;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(13))
+                        {
+                        }
+                        break;
                         #endregion
                 }
                 for (int i = 0; i < prevFrameInputs.Length; i++)
