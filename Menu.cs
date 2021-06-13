@@ -33,7 +33,7 @@ namespace Menu
                     $"{(cursorPos == 7 ? "> " : "  ")}Soft Drop: {Controls.softDrop} - Default: Down Arrow (40)\n" +
                     $"{(cursorPos == 8 ? "> " : "  ")}Rotate Clockwise: {Controls.rotCw} - Default: Up Arrow (38)\n" +
                     $"{(cursorPos == 9 ? "> " : "  ")}Rotate Counterclockwise: {Controls.rotCcw} - Default: Z (90)\n" +
-                    $"{(cursorPos == 10 ? "> " : "  ")}Rotate 180: {Controls.rot180}\n" +
+                    $"{(cursorPos == 10 ? "> " : "  ")}Rotate 180: {Controls.rot180} - Default: X (88)\n" +
                     $"{(cursorPos == 11 ? "> " : "  ")}Hold: {Controls.hold}\n" +
                     $"Scores:\n" +
                     $"{HighScores.Scores[0]}\n" +
