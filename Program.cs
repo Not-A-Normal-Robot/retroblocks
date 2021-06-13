@@ -844,6 +844,7 @@ namespace Game
         public static int rotCw;
         public static int rotCcw;
         public static int rot180;
+        public static int hold;
         public static int das;
         public static int arr;
         public static bool useSonicDrop;
@@ -851,7 +852,7 @@ namespace Game
         {
             get
             {
-                return new int[] { left, right, hardDrop, softDrop, rotCw, rotCcw, rot180 };
+                return new int[] { left, right, hardDrop, softDrop, rotCw, rotCcw, rot180, hold };
             }
         }
         public readonly static int retry = 82;
@@ -877,6 +878,7 @@ namespace Game
                     rotCw = Convert.ToInt32(reader.ReadLine());
                     rotCcw = Convert.ToInt32(reader.ReadLine());
                     rot180 = Convert.ToInt32(reader.ReadLine());
+                    hold = Convert.ToInt32(reader.ReadLine());
                     das = Convert.ToInt32(reader.ReadLine());
                     arr = Convert.ToInt32(reader.ReadLine());
                     useSonicDrop = Convert.ToBoolean(reader.ReadLine());
@@ -884,15 +886,7 @@ namespace Game
                     // Checks for duplicates
                     if (buttons.GroupBy(x => x).Any(g => g.Count() > 1))
                     {
-                        left = 37;
-                        right = 39;
-                        hardDrop = 32;
-                        softDrop = 40;
-                        rotCw = 38;
-                        rotCcw = 90;
-                        rot180 = 88;
-
-                        SaveControls();
+                        ResetControls();
                     }
                     #endregion
                 }
@@ -904,14 +898,15 @@ namespace Game
         }
         public static void SaveControls()
         {
+            string dataLoc = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             #region Check for file
-            if (!File.Exists("%appdata%\\Retroblocks\\config.txt"))
+            if (!File.Exists(dataLoc + "\\Retroblocks\\config.txt"))
             {
-                if (!Directory.Exists("%appdata%\\Retroblocks"))
+                if (!Directory.Exists(dataLoc + "\\Retroblocks"))
                 {
-                    Directory.CreateDirectory("%appdata%\\Retroblocks");
+                    Directory.CreateDirectory(dataLoc + "\\Retroblocks");
                 }
-                File.Create("%appdata%\\Retroblocks\\config.txt");
+                File.Create(dataLoc + "\\Retroblocks\\config.txt");
             }
             #endregion
             #region Save
@@ -929,6 +924,7 @@ namespace Game
             rotCw = 38;
             rotCcw = 90;
             rot180 = 88;
+            hold = 67;
             das = 10;
             arr = 1;
             useSonicDrop = false;
