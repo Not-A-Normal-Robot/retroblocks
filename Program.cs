@@ -24,6 +24,7 @@ namespace Game
             Menu.Main.Start();
             #endregion
             #region Setup game
+            Piece.Setup();
             BagRandomizer.Setup();
             Matrix.Setup();
             CurrentPiece.Setup();
@@ -110,8 +111,7 @@ namespace Game
         public static bool[][] nextPieceSpawn;
         public static char piece;
         public static int piecenum;
-        public static int xoffset;
-        public static int yoffset;
+        public static int rotState;
         public static bool landed
         {
             get
@@ -254,11 +254,12 @@ namespace Game
         }
         public static void Spawn()
         {
+            rotState = 0;
             for(int x = 0; x < 5; x++)
             {
                 for(int y = 0; y < 5; y++)
                 {
-                    state[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum])[y][x];
+                    state[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum]).piece[rotState][y][x];
                 }
             }
             NextPiece();
@@ -267,7 +268,7 @@ namespace Game
             {
                 for (int y = 0; y < 5; y++)
                 {
-                    nextPieceSpawn[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum])[y][x];
+                    nextPieceSpawn[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum]).piece[rotState][y][x];
                 }
             }
         }
@@ -353,11 +354,11 @@ namespace Game
             }
             if(piecenum + intoFuture > 6)
             {
-                return Piece.GetPiece(BagRandomizer.output[BagRandomizer.next][piecenum + intoFuture - 7]);
+                return Piece.GetPiece(BagRandomizer.output[BagRandomizer.next][piecenum + intoFuture - 7]).piece[0];
             }
             else
             {
-                return Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum + intoFuture]);
+                return Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum + intoFuture]).piece[0];
             }
         }
         public static void ResetLockDelay()
@@ -566,7 +567,7 @@ namespace Game
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.SetCursorPosition(0, 1);
-            bool[][] _ = Piece.GetPiece(HoldPiece.current);
+            bool[][] _ = Piece.GetPiece(HoldPiece.current).piece[0];
             Console.Write(GetMinos(_[1]));
             Console.SetCursorPosition(0, 2);
             Console.Write(GetMinos(_[2]));
@@ -658,73 +659,461 @@ namespace Game
             current = 'N';
         }
     }
-    static class Piece
+    class Piece
     {
-        public readonly static bool[][] Z = new bool[5][]
+        public bool[][][] piece = new bool[4][][]
         {
-            new bool[5] { false, false, false, false, false }, //
-            new bool[5] { false, true,  true,  false, false }, //  [][]# 
-            new bool[5] { false, false, true,  true,  false }, //  # [][]# 
-            new bool[5] { false, false, false, false, false }, //
-            new bool[5] { false, false, false, false, false }, //
+            new bool[5][] { new bool[5], new bool[5], new bool[5], new bool[5], new bool[5] }, // init rot
+            new bool[5][] { new bool[5], new bool[5], new bool[5], new bool[5], new bool[5] }, // cw
+            new bool[5][] { new bool[5], new bool[5], new bool[5], new bool[5], new bool[5] }, // 180
+            new bool[5][] { new bool[5], new bool[5], new bool[5], new bool[5], new bool[5] }, // ccw
         };
-        public readonly static bool[][] L = new bool[5][]
+        public Offset[][] cwKicks;
+        public Offset[][] ccwKicks;
+        public Offset[][] flipKicks; // kicks for 180 rot
+        public Piece(bool[][][] piece, Offset[][] cwKicks, Offset[][] ccwKicks, Offset[][] flipKicks)
         {
-            new bool[5] { false, false, false, false, false }, //
-            new bool[5] { false, false, false, true,  false }, //  # # []
-            new bool[5] { false, true,  true,  true,  false }, //  [][][]#
-            new bool[5] { false, false, false, false, false }, //
-            new bool[5] { false, false, false, false, false }, //
-        };
-        public readonly static bool[][] O = new bool[5][]
+            this.piece = piece;
+            this.cwKicks = cwKicks;
+            this.ccwKicks = ccwKicks;
+            this.flipKicks = flipKicks;
+        }
+        public static Piece Z;
+        public static Piece L;
+        public static Piece O;
+        public static Piece S;
+        public static Piece I;
+        public static Piece J;
+        public static Piece T;
+        public static Piece None;
+        public static void Setup()
         {
-            new bool[5] { false, false, false, false, false }, //
-            new bool[5] { false, false, true,  true,  false }, //  # [][]
-            new bool[5] { false, false, true,  true,  false }, //  # [][]#
-            new bool[5] { false, false, false, false, false }, //
-            new bool[5] { false, false, false, false, false }, //
-        };
-        public readonly static bool[][] S = new bool[5][]
-        {
-            new bool[5] { false, false, false, false, false }, //
-            new bool[5] { false, false, true,  true,  false }, //   #[][]
-            new bool[5] { false, true,  true,  false, false }, //  [][]# #
-            new bool[5] { false, false, false, false, false }, //
-            new bool[5] { false, false, false, false, false }, //
-        };
-        public readonly static bool[][] I = new bool[5][]
-        {
-            new bool[5] { false, false, false, false, false }, //
-            new bool[5] { false, false, false, false, false }, //  # # #
-            new bool[5] { false, true,  true,  true,  true  }, //  [][][][]
-            new bool[5] { false, false, false, false, false }, //
-            new bool[5] { false, false, false, false, false }, //
-        };
-        public readonly static bool[][] J = new bool[5][]
-        {
-            new bool[5] { false, false, false, false, false }, //
-            new bool[5] { false, true,  false, false, false }, //  []# #
-            new bool[5] { false, true,  true,  true,  false }, //  [][][]#
-            new bool[5] { false, false, false, false, false }, //
-            new bool[5] { false, false, false, false, false }, //
-        };
-        public readonly static bool[][] T = new bool[5][]
-        {
-            new bool[5] { false, false, false, false, false }, //
-            new bool[5] { false, false, true,  false, false }, //  # []#
-            new bool[5] { false, true,  true,  true,  false }, //  [][][]#
-            new bool[5] { false, false, false, false, false }, //
-            new bool[5] { false, false, false, false, false }, //
-        };
-        public readonly static bool[][] None = new bool[5][]
-        {
-            new bool[5] { false, false, false, false, false },
-            new bool[5] { false, false, false, false, false },
-            new bool[5] { false, false, false, false, false },
-            new bool[5] { false, false, false, false, false },
-            new bool[5] { false, false, false, false, false },
-        };
-        public static bool[][] GetPiece(char pieceChar)
+            Z = new Piece(
+                new bool[4][][]{
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false }, // 
+                        new bool[5] { false, true,  true,  false, false }, // [][]##
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]##
+                        new bool[5] { false, false, false, false, false }, // 
+                        new bool[5] { false, false, false, false, false }, // 
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false }, //
+                        new bool[5] { false, false, false, true,  false }, // ####[]
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, false, false, false, false }, //
+                        },                                              
+                    new bool[5][] {                                     
+                        new bool[5] { false, false, false, false, false }, // 
+                        new bool[5] { false, false, false, false, false }, // ######
+                        new bool[5] { false, true,  true,  false, false }, // [][]##
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, false, false, false, false }, // 
+                        },                                              
+                    new bool[5][] {                                     
+                        new bool[5] { false, false, false, false, false }, //
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, true,  true,  false, false }, // [][]##
+                        new bool[5] { false, true,  false, false, false }, // []####
+                        new bool[5] { false, false, false, false, false }, //
+                        },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                }
+                );
+            L = new Piece(
+                new bool[4][][]{
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, true,  false },
+                        new bool[5] { false, true,  true,  true,  false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, // TODO
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                }
+                );
+            O = new Piece(
+                new bool[4][][]{
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                }
+                );
+            S = new Piece(
+                new bool[4][][]{
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                }
+                );
+            I = new Piece(
+                new bool[4][][]{
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                }
+                );
+            J = new Piece(
+                new bool[4][][]{
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                }
+                );
+            T = new Piece(
+                new bool[4][][]{
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                }
+                );
+            None = new Piece(
+                new bool[4][][]{
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                    new bool[5][] {
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false },
+                        },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                },
+                new Offset[4][]
+                {
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                }
+                );
+        }
+        public static Piece GetPiece(char pieceChar)
         {
             switch(pieceChar)
             {
@@ -742,8 +1131,6 @@ namespace Game
                     return J;
                 case 'T':
                     return T;
-                case 'N':
-                    return None;
                 default:
                     return None;
             }
@@ -1064,5 +1451,15 @@ public static class HighScores
     {
         Scores = new int[5] { 10000, 8000, 5000, 4000, 2000 };
         SaveScores();
+    }
+}
+class Offset
+{
+    public int x;
+    public int y;
+    public Offset(int _x, int _y)
+    {
+        x = _x;
+        y = _y;
     }
 }
