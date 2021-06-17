@@ -996,6 +996,7 @@ public static class HighScores
                 {
                     Scores[i] = Convert.ToInt32(reader.ReadLine());
                 }
+                reader.Close();
                 Array.Sort(Scores); // lowest to highest
                 Array.Reverse(Scores); // highest to lowest
             }
@@ -1003,6 +1004,10 @@ public static class HighScores
             {
                 ResetScores();
             }
+        }
+        if(Scores[0] == 0)
+        {
+            ResetScores();
         }
     }
     public static void SaveScore(int score)

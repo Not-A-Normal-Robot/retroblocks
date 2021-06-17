@@ -23,13 +23,13 @@ namespace Menu
                 Console.Write(
                     $"===================\n" +
                     $"||  RETROBLOCKS  ||\n" +
-                    $"===================\n" +
-                    $"{(cursorPos == 0 ? "> " : "  ")}Start\n" +
+                    $"===================\n\n" +
+                    $"{(cursorPos == 0 ? "> " : "  ")}Start!\n\n" +
                     $"Handling: \n"+
                     $"{(cursorPos == 1 ? "> " : "  ")}DAS: {Controls.das} - Default: 10\n" +
                     $"{(cursorPos == 2 ? "> " : "  ")}ARR: {Controls.arr} - Default: 1\n" +
-                    $"{(cursorPos == 3 ? "> " : "  ")}Soft Drop Mode: {(Controls.useSonicDrop ? "instant" : "normal")} - Default: normal\n" +
-                    $"Controls: \n" +  //  from left: 234567890123456789012345678
+                    $"{(cursorPos == 3 ? "> " : "  ")}Soft Drop Mode: {(Controls.useSonicDrop ? "instant" : "normal")} - Default: normal\n\n" +
+                    $"Controls: (Setting up is glitchy, idk why :P)\n" +  //  from left: 234567890123456789012345678
                     $"{(cursorPos == 4 ? "> " : "  ")}Left: {Controls.left} - Default: Left Arrow (37)\n" +
                     $"{(cursorPos == 5 ? "> " : "  ")}Right: {Controls.right} - Default: Right Arrow (39)\n" +
                     $"{(cursorPos == 6 ? "> " : "  ")}Hard Drop: {Controls.hardDrop} - Default: Space (32)\n" +
@@ -37,7 +37,7 @@ namespace Menu
                     $"{(cursorPos == 8 ? "> " : "  ")}Rotate Clockwise: {Controls.rotCw} - Default: Up Arrow (38)\n" +
                     $"{(cursorPos == 9 ? "> " : "  ")}Rotate Counterclockwise: {Controls.rotCcw} - Default: Z (90)\n" +
                     $"{(cursorPos == 10 ? "> " : "  ")}Rotate 180: {Controls.rot180} - Default: X (88)\n" +
-                    $"{(cursorPos == 11 ? "> " : "  ")}Hold: {Controls.hold} - Default: C (67)\n" +
+                    $"{(cursorPos == 11 ? "> " : "  ")}Hold: {Controls.hold} - Default: C (67)\n\n" +
                     $"Scores:\n" +
                     $"{HighScores.Scores[0]}\n" +
                     $"{HighScores.Scores[1]}\n" +
@@ -58,6 +58,7 @@ namespace Menu
                         if (NativeKeyboard.IsKeyDown(13))
                         {
                             start = true;
+                            Console.Clear();
                         }
                         break;
                     #endregion
@@ -153,9 +154,14 @@ namespace Menu
                         }
                         if (NativeKeyboard.IsKeyDown(13))
                         {
-                            Console.SetCursorPosition(9, 9);
+                            Console.SetCursorPosition(8, 9);
                             Console.Write("Awaiting input, press Esc to cancel - Default: Left Arrow (37)               ");
+                            System.Threading.Thread.Sleep(250);
                             ConsoleKeyInfo key = Console.ReadKey();
+                            while (key.Key == ConsoleKey.Enter)
+                            {
+                                key = Console.ReadKey();
+                            }
                             if (key.Key != ConsoleKey.Escape)
                             {
                                 Controls.left = (int)key.Key;
@@ -179,9 +185,14 @@ namespace Menu
                         }
                         if (NativeKeyboard.IsKeyDown(13))
                         {
-                            Console.SetCursorPosition(10, 10);
+                            Console.SetCursorPosition(9, 10);
                             Console.Write("Awaiting input, press Esc to cancel - Default: Right Arrow (39)               ");
+                            System.Threading.Thread.Sleep(250);
                             ConsoleKeyInfo key = Console.ReadKey();
+                            while (key.Key == ConsoleKey.Enter)
+                            {
+                                key = Console.ReadKey();
+                            }
                             if (key.Key != ConsoleKey.Escape)
                             {
                                 Controls.right = (int)key.Key;
@@ -207,7 +218,12 @@ namespace Menu
                         {
                             Console.SetCursorPosition(13, 11);
                             Console.Write("Awaiting input, press Esc to cancel - Default: Space (32)               ");
+                            System.Threading.Thread.Sleep(250);
                             ConsoleKeyInfo key = Console.ReadKey();
+                            while (key.Key == ConsoleKey.Enter)
+                            {
+                                key = Console.ReadKey();
+                            }
                             if (key.Key != ConsoleKey.Escape)
                             {
                                 Controls.hardDrop = (int)key.Key;
@@ -233,7 +249,12 @@ namespace Menu
                         {
                             Console.SetCursorPosition(13, 12);
                             Console.Write("Awaiting input, press Esc to cancel - Default: Down Arrow (40)               ");
+                            System.Threading.Thread.Sleep(250);
                             ConsoleKeyInfo key = Console.ReadKey();
+                            while (key.Key == ConsoleKey.Enter)
+                            {
+                                key = Console.ReadKey();
+                            }
                             if (key.Key != ConsoleKey.Escape)
                             {
                                 Controls.softDrop = (int)key.Key;
@@ -257,9 +278,14 @@ namespace Menu
                         }
                         if (NativeKeyboard.IsKeyDown(13))
                         {
-                            Console.SetCursorPosition(20, 13);
+                            Console.SetCursorPosition(19, 13);
                             Console.Write("Awaiting input, press Esc to cancel - Default: Up Arrow (38)               ");
+                            System.Threading.Thread.Sleep(250);
                             ConsoleKeyInfo key = Console.ReadKey();
+                            while (key.Key == ConsoleKey.Enter)
+                            {
+                                key = Console.ReadKey();
+                            }
                             if (key.Key != ConsoleKey.Escape)
                             {
                                 Controls.rotCw = (int)key.Key;
@@ -283,9 +309,14 @@ namespace Menu
                         }
                         if (NativeKeyboard.IsKeyDown(13))
                         {
-                            Console.SetCursorPosition(27, 14);
+                            Console.SetCursorPosition(26, 14);
                             Console.Write("Awaiting input, press Esc to cancel - Default: Z (90)               ");
+                            System.Threading.Thread.Sleep(250);
                             ConsoleKeyInfo key = Console.ReadKey();
+                            while (key.Key == ConsoleKey.Enter)
+                            {
+                                key = Console.ReadKey();
+                            }
                             if (key.Key != ConsoleKey.Escape)
                             {
                                 Controls.rotCcw = (int)key.Key;
@@ -309,9 +340,14 @@ namespace Menu
                         }
                         if (NativeKeyboard.IsKeyDown(13))
                         {
-                            Console.SetCursorPosition(15, 15);
+                            Console.SetCursorPosition(14, 15);
                             Console.Write("Awaiting input, press Esc to cancel - Default: X (88)               ");
+                            System.Threading.Thread.Sleep(250);
                             ConsoleKeyInfo key = Console.ReadKey();
+                            while (key.Key == ConsoleKey.Enter)
+                            {
+                                key = Console.ReadKey();
+                            }
                             if (key.Key != ConsoleKey.Escape)
                             {
                                 Controls.rot180 = (int)key.Key;
@@ -330,9 +366,14 @@ namespace Menu
                         }
                         if (NativeKeyboard.IsKeyDown(13))
                         {
-                            Console.SetCursorPosition(9, 16);
+                            Console.SetCursorPosition(8, 16);
                             Console.Write("Awaiting input, press Esc to cancel - Default: C (67)               ");
+                            System.Threading.Thread.Sleep(250);
                             ConsoleKeyInfo key = Console.ReadKey();
+                            while(key.Key == ConsoleKey.Enter)
+                            {
+                                key = Console.ReadKey();
+                            }
                             if (key.Key != ConsoleKey.Escape)
                             {
                                 Controls.rot180 = (int)key.Key;
