@@ -159,7 +159,6 @@ namespace Game
             if (landed && (lockDelayTimer == null || !lockDelayTimer.Enabled))
             {
                 lockDelayTimer = new Timer(level.lockDelay * 16.6666666666666);
-                lockDelayTimer.Elapsed += LockPiece;
                 lockDelayTimer.Enabled = true;
             }
         }
@@ -187,6 +186,7 @@ namespace Game
             leftDasTimer = Controls.das;
             rightDasTimer = Controls.das;
             Spawn();
+            level = Levels.list[0];
             gravTimer = new Timer(1 / level.g * 16.6666);
             gravTimer.AutoReset = true;
             gravTimer.Elapsed += Fall;
@@ -899,6 +899,12 @@ namespace Game
         }
         public static void SaveControls()
         {
+            #region Check for duplicates
+            if (buttons.GroupBy(x => x).Any(g => g.Count() > 1))
+            {
+                ResetControls();
+            }
+            #endregion
             string dataLoc = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             #region Check for file
             if (!File.Exists(dataLoc + "\\Retroblocks\\config.txt"))
@@ -911,7 +917,7 @@ namespace Game
             }
             #endregion
             #region Save
-            StreamWriter writer = new StreamWriter("%appdata%\\Retroblocks\\config.txt");
+            StreamWriter writer = new StreamWriter(dataLoc + "\\Retroblocks\\config.txt");
             writer.Write($"{left}\n{right}\n{hardDrop}\n{softDrop}\n{rotCw}\n{rotCcw}\n{rot180}\n{das}\n{arr}");
             writer.Close();
             #endregion

@@ -29,7 +29,7 @@ namespace Menu
                     $"{(cursorPos == 1 ? "> " : "  ")}DAS: {Controls.das} - Default: 10\n" +
                     $"{(cursorPos == 2 ? "> " : "  ")}ARR: {Controls.arr} - Default: 1\n" +
                     $"{(cursorPos == 3 ? "> " : "  ")}Soft Drop Mode: {(Controls.useSonicDrop ? "instant" : "normal")} - Default: normal\n" +
-                    $"Controls: \n" +
+                    $"Controls: \n" +  //  from left: 234567890123456789012345678
                     $"{(cursorPos == 4 ? "> " : "  ")}Left: {Controls.left} - Default: Left Arrow (37)\n" +
                     $"{(cursorPos == 5 ? "> " : "  ")}Right: {Controls.right} - Default: Right Arrow (39)\n" +
                     $"{(cursorPos == 6 ? "> " : "  ")}Hard Drop: {Controls.hardDrop} - Default: Space (32)\n" +
@@ -66,17 +66,21 @@ namespace Menu
                         if (NativeKeyboard.IsKeyDown(39) && Controls.das < 20 && !prevFrameInputs[39])
                         {
                             Controls.das++;
+                            Controls.SaveControls();
+                            Console.Clear();
                         }
-                        if(NativeKeyboard.IsKeyDown(37) && Controls.das > 1 && !prevFrameInputs[37])
+                        if (NativeKeyboard.IsKeyDown(37) && Controls.das > 1 && !prevFrameInputs[37])
                         {
                             Controls.das--;
+                            Controls.SaveControls();
+                            Console.Clear();
                         }
-                        if(NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                        if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
                         {
                             cursorPos++;
                             break;
                         }
-                        if(NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
+                        if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
                         {
                             cursorPos--;
                             break;
@@ -88,10 +92,14 @@ namespace Menu
                         if (NativeKeyboard.IsKeyDown(39) && Controls.arr < 15 && !prevFrameInputs[39])
                         {
                             Controls.arr++;
+                            Controls.SaveControls();
+                            Console.Clear();
                         }
                         if (NativeKeyboard.IsKeyDown(37) && Controls.arr > 0 && !prevFrameInputs[37])
                         {
-                            Controls.das--;
+                            Controls.arr--;
+                            Controls.SaveControls();
+                            Console.Clear();
                         }
                         if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
                         {
@@ -107,13 +115,17 @@ namespace Menu
                     #endregion
                     case 3:
                         #region Sonic Drop
-                        if (NativeKeyboard.IsKeyDown(39) &&!prevFrameInputs[39])
+                        if (NativeKeyboard.IsKeyDown(39) && !prevFrameInputs[39])
                         {
                             Controls.useSonicDrop = !Controls.useSonicDrop;
+                            Controls.SaveControls();
+                            Console.Clear();
                         }
                         if (NativeKeyboard.IsKeyDown(37) && !prevFrameInputs[37])
                         {
                             Controls.useSonicDrop = !Controls.useSonicDrop;
+                            Controls.SaveControls();
+                            Console.Clear();
                         }
                         if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
                         {
@@ -141,6 +153,192 @@ namespace Menu
                         }
                         if (NativeKeyboard.IsKeyDown(13))
                         {
+                            Console.SetCursorPosition(9, 9);
+                            Console.Write("Awaiting input, press Esc to cancel - Default: Left Arrow (37)               ");
+                            ConsoleKeyInfo key = Console.ReadKey();
+                            if (key.Key != ConsoleKey.Escape)
+                            {
+                                Controls.left = (int)key.Key;
+                                Controls.SaveControls();
+                            }
+                            Console.Clear();
+                        }
+                        break;
+                    #endregion
+                    case 5:
+                        #region Right
+                        if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                        {
+                            cursorPos++;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
+                        {
+                            cursorPos--;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(13))
+                        {
+                            Console.SetCursorPosition(10, 10);
+                            Console.Write("Awaiting input, press Esc to cancel - Default: Right Arrow (39)               ");
+                            ConsoleKeyInfo key = Console.ReadKey();
+                            if (key.Key != ConsoleKey.Escape)
+                            {
+                                Controls.right = (int)key.Key;
+                                Controls.SaveControls();
+                            }
+                            Console.Clear();
+                        }
+                        break;
+                    #endregion
+                    case 6:
+                        #region Hard Drop
+                        if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                        {
+                            cursorPos++;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
+                        {
+                            cursorPos--;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(13))
+                        {
+                            Console.SetCursorPosition(13, 11);
+                            Console.Write("Awaiting input, press Esc to cancel - Default: Space (32)               ");
+                            ConsoleKeyInfo key = Console.ReadKey();
+                            if (key.Key != ConsoleKey.Escape)
+                            {
+                                Controls.hardDrop = (int)key.Key;
+                                Controls.SaveControls();
+                            }
+                            Console.Clear();
+                        }
+                        break;
+                    #endregion
+                    case 7:
+                        #region Soft Drop
+                        if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                        {
+                            cursorPos++;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
+                        {
+                            cursorPos--;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(13))
+                        {
+                            Console.SetCursorPosition(13, 12);
+                            Console.Write("Awaiting input, press Esc to cancel - Default: Down Arrow (40)               ");
+                            ConsoleKeyInfo key = Console.ReadKey();
+                            if (key.Key != ConsoleKey.Escape)
+                            {
+                                Controls.softDrop = (int)key.Key;
+                                Controls.SaveControls();
+                            }
+                            Console.Clear();
+                        }
+                        break;
+                    #endregion
+                    case 8:
+                        #region Rot cw
+                        if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                        {
+                            cursorPos++;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
+                        {
+                            cursorPos--;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(13))
+                        {
+                            Console.SetCursorPosition(20, 13);
+                            Console.Write("Awaiting input, press Esc to cancel - Default: Up Arrow (38)               ");
+                            ConsoleKeyInfo key = Console.ReadKey();
+                            if (key.Key != ConsoleKey.Escape)
+                            {
+                                Controls.rotCw = (int)key.Key;
+                                Controls.SaveControls();
+                            }
+                            Console.Clear();
+                        }
+                        break;
+                    #endregion
+                    case 9:
+                        #region Rot ccw
+                        if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                        {
+                            cursorPos++;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
+                        {
+                            cursorPos--;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(13))
+                        {
+                            Console.SetCursorPosition(27, 14);
+                            Console.Write("Awaiting input, press Esc to cancel - Default: Z (90)               ");
+                            ConsoleKeyInfo key = Console.ReadKey();
+                            if (key.Key != ConsoleKey.Escape)
+                            {
+                                Controls.rotCcw = (int)key.Key;
+                                Controls.SaveControls();
+                            }
+                            Console.Clear();
+                        }
+                        break;
+                    #endregion
+                    case 10:
+                        #region Rot 180
+                        if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                        {
+                            cursorPos++;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
+                        {
+                            cursorPos--;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(13))
+                        {
+                            Console.SetCursorPosition(15, 15);
+                            Console.Write("Awaiting input, press Esc to cancel - Default: X (88)               ");
+                            ConsoleKeyInfo key = Console.ReadKey();
+                            if (key.Key != ConsoleKey.Escape)
+                            {
+                                Controls.rot180 = (int)key.Key;
+                                Controls.SaveControls();
+                            }
+                            Console.Clear();
+                        }
+                        break;
+                    #endregion
+                    case 11:
+                        #region Hold
+                        if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
+                        {
+                            cursorPos--;
+                            break;
+                        }
+                        if (NativeKeyboard.IsKeyDown(13))
+                        {
+                            Console.SetCursorPosition(9, 16);
+                            Console.Write("Awaiting input, press Esc to cancel - Default: C (67)               ");
+                            ConsoleKeyInfo key = Console.ReadKey();
+                            if (key.Key != ConsoleKey.Escape)
+                            {
+                                Controls.rot180 = (int)key.Key;
+                                Controls.SaveControls();
+                            }
+                            Console.Clear();
                         }
                         break;
                         #endregion
