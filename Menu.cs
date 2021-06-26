@@ -22,12 +22,6 @@ namespace Menu
             "NOT_A_ROBOT\n" +
             "\n" +
             "\n" +
-            "Rotation System\n" +
-            "\n" +
-            "MrZ - Techmino Rotation\n" +
-            "github.com/MrZ626\n" +
-            "github.com/26F-Studio/Techmino/\n" +
-            "\n" +
             "\n" +
             "Special Thanks\n" +
             "\n" +
@@ -71,13 +65,13 @@ namespace Menu
                         $"{(cursorPos == 9 ? "> " : "  ")}Rotate Counterclockwise: {Controls.rotCcw} - Default: Z (90)\n" +
                         $"{(cursorPos == 10 ? "> " : "  ")}Rotate 180: {Controls.rot180} - Default: X (88)\n" +
                         $"{(cursorPos == 11 ? "> " : "  ")}Hold: {Controls.hold} - Default: C (67)\n\n" +
+                        $"{(cursorPos == 12 ? "> " : "  ")}Credits\n" +
                         $"Scores:\n" +
                         $"{HighScores.Scores[0]}\n" +
                         $"{HighScores.Scores[1]}\n" +
                         $"{HighScores.Scores[2]}\n" +
                         $"{HighScores.Scores[3]}\n" +
-                        $"{HighScores.Scores[4]}\n" +
-                        $"{(cursorPos == 12 ? "> " : "  ")}Credits\n"
+                        $"{HighScores.Scores[4]}\n"
                         );
                 }
                 else

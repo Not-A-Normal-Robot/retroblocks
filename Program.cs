@@ -721,24 +721,24 @@ namespace Game
                 },
                 new Offset[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1, 1), new Offset(0, -2), new Offset(-1, -2) }, // 0
-                    new Offset[5] { new Offset(0, 0), new Offset(1, 0), new Offset(1, -1), new Offset(0, 2), new Offset(1, 2) },     // R
-                    new Offset[5] { new Offset(0, 0), new Offset(1, 0), new Offset(1, 1), new Offset(0, -2), new Offset(1, -2) },    // 2
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(1, 1), new Offset(0, -2), new Offset(1, -2) },   // L
+                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1, 1), new Offset(0, -2), new Offset(-1, -2) }, // 0 => R
+                    new Offset[5] { new Offset(0, 0), new Offset(1, 0), new Offset(1, -1), new Offset(0, 2), new Offset(1, 2) },     // R => 2
+                    new Offset[5] { new Offset(0, 0), new Offset(1, 0), new Offset(1, 1), new Offset(0, -2), new Offset(1, -2) },    // 2 => L
+                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(1, 1), new Offset(0, -2), new Offset(1, -2) },   // L => 0
                 },
                 new Offset[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset(1, 0), new Offset(1, 1), new Offset(0, -2), new Offset(1, -2) },    // 0
-                    new Offset[5] { new Offset(0, 0), new Offset(1, 0), new Offset(1, -1), new Offset(0, 2), new Offset(1, 2) },     // R
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1, 1), new Offset(0, -2), new Offset(-1, -2) }, // 2
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(1, 0), new Offset(1, 1), new Offset(0, -2), new Offset(1, -2) },    // 0 => L
+                    new Offset[5] { new Offset(0, 0), new Offset(1, 0), new Offset(1, -1), new Offset(0, 2), new Offset(1, 2) },     // R => 0
+                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1, 1), new Offset(0, -2), new Offset(-1, -2) }, // 2 => R
+                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1, -1), new Offset(0, 2), new Offset(-1, 2) },  // L => 2
                 },
                 new Offset[4][]
-                {
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                {                    // 1                 2                      3                   4                       5                  6                   7                   8                  9                 10               11              12                 13
+                    new Offset[13] { new Offset(0, 0), new Offset( 0, -1), new Offset( 1,  0), new Offset( 2,  0), new Offset( 1,  1), new Offset( 2,  1), new Offset(-1,  0), new Offset(-2, 0), new Offset(-1,  1), new Offset(-2,  1), new Offset(0, -1), new Offset(3, 0), new Offset(-3,  0) },    // 0 => 2
+                    new Offset[13] { new Offset(0, 0), new Offset( 1,  0), new Offset( 0,  1), new Offset( 0,  2), new Offset(-1,  1), new Offset(-1,  2), new Offset( 0, -1), new Offset(0, -2), new Offset(-1, -1), new Offset(-1, -2), new Offset(1,  0), new Offset(0, 3), new Offset( 0, -3) }, // R => L
+                    new Offset[13] { new Offset(0, 0), new Offset( 0, -1), new Offset(-1,  0), new Offset(-2,  0), new Offset(-1, -1), new Offset(-2, -1), new Offset( 1,  0), new Offset(0,  0), new Offset( 0,  0), new Offset( 0,  0), new Offset(0,  0), new Offset(0, 0), new Offset( 0,  0) },
+                    new Offset[13] { new Offset(0, 0), new Offset(-1,  0), new Offset( 0, -1), new Offset( 0, -2), new Offset( 1, -1), new Offset( 1,  2), new Offset( 0,  1), new Offset(0,  0), new Offset( 0,  0), new Offset( 0,  0), new Offset(0,  0), new Offset(0, 0), new Offset( 0,  0) },
                 }
                 );
             L = new Piece(
