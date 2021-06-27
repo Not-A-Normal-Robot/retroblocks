@@ -22,6 +22,7 @@ namespace Game
             #endregion
             #region Main Menu
             Menu.Main.Start();
+            Console.Clear();
             #endregion
             #region Setup game
             Piece.Setup();
@@ -32,7 +33,6 @@ namespace Game
             CurrentPiece.UpdatePiece();
             HoldPiece.Setup();
             Drawer.Setup();
-
             #endregion
             #region Run game
             frameTimer = new Timer(16);
@@ -164,25 +164,29 @@ namespace Game
         }
         public static void Setup()
         {
+            #region Setup Active Piece State
             state = new bool[10][];
             for (int i = 0; i < state.Length; i++)
             {
                 state[i] = new bool[40];
             }
+            #endregion
+            #region Setup Ghost Piece State
             ghost = new bool[10][];
             for (int i = 0; i < ghost.Length; i++)
             {
                 ghost[i] = new bool[40];
             }
+            #endregion
+            #region Setup Next Piece Position State
             nextPieceSpawn = new bool[10][];
             for (int i = 0; i < nextPieceSpawn.Length; i++)
             {
                 nextPieceSpawn[i] = new bool[40];
             }
+            #endregion
             piece = BagRandomizer.output[BagRandomizer.current][0];
             piecenum = 0;
-            Controls.das = 8;
-            Controls.arr = 0;
             leftDasTimer = Controls.das;
             rightDasTimer = Controls.das;
             Spawn();
@@ -393,28 +397,13 @@ namespace Game
             }
             while (!IsLanded(ghost))
             {
-                bool[][] newState = new bool[10][]
-                {
-                    new bool[40],
-                    new bool[40],
-                    new bool[40],
-                    new bool[40],
-                    new bool[40],
-                    new bool[40],
-                    new bool[40],
-                    new bool[40],
-                    new bool[40],
-                    new bool[40],
-                };
-
                 for (int y = 0; y < 40; y++)
                 {
                     for (int x = 0; x < 10; x++)
                     {
-                        newState[x][Math.Max(y - 1, 0)] = ghost[x][y];
+                        ghost[x][Math.Max(y - 1, 0)] = ghost[x][y];
                     }
                 }
-                ghost = newState;
             }
         }
         private static bool IsLanded(bool[][] _state)
@@ -501,30 +490,32 @@ namespace Game
             Console.SetCursorPosition(0, 0);
             Console.ForegroundColor = ConsoleColor.Green;
             Console.Write(
-               $"HOLD        |                    |    NEXT\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n" +
-               $"            |                    |\n"
+  /* 0*/         $"HOLD        |                    |    NEXT\n" +
+  /* 1*/         $"            |                    |\n" +
+  /* 2*/         $"            |                    |\n" +
+  /* 3*/         $"            |                    |\n" +
+  /* 4*/         $"            |                    |\n" +
+  /* 5*/         $"            |                    |\n" +
+  /* 6*/         $"            |                    |\n" +
+  /* 7*/         $"            |                    |\n" +
+  /* 8*/         $"            |                    |\n" +
+  /* 9*/         $"            |                    |\n" +
+  /*10*/         $"            |                    |\n" +
+  /*11*/         $"            |                    |\n" +
+  /*12*/         $"            |                    |\n" +
+  /*13*/         $"            |                    |\n" +
+  /*14*/         $"            |                    |\n" +
+  /*15*/         $"            |                    |\n" +
+  /*16*/         $"            |                    |\n" +
+  /*17*/         $"            |                    |\n" +
+  /*18*/         $"            |                    |\n" +
+  /*19*/         $"            |                    |\n" +
+  /*20*/         $"            |                    |\n" +
+  /*21*/         $"            |                    |\n" +
+  /*22*/         $"            |                    |\n" +
+  /*23*/         $"            |                    |\n"
+              // 0123456789012345678901234567890123
+              // 0         10        20        30
                 );
             Console.ForegroundColor = ConsoleColor.Red;
             for(int i = 0; i < 4; i++)
@@ -533,6 +524,15 @@ namespace Game
                 Console.Write("|                    |");
             }
             DrawToConsole();
+            System.Threading.Thread.Sleep(250);
+            Console.SetCursorPosition(12, 20);
+            Console.Write("R E A D Y");
+            System.Threading.Thread.Sleep(1000);
+            Console.SetCursorPosition(12, 20);
+            Console.Write("   G O   ");
+            System.Threading.Thread.Sleep(1000);
+            Console.SetCursorPosition(12, 20);
+            Console.Write("         ");
         }
         public static void DrawToConsole()
         {
@@ -554,6 +554,7 @@ namespace Game
                     Console.Write(Picture[j]);
                 }
                 DrawHoldPiece();
+                DrawNextPieces();
             }
             else
             {
@@ -571,6 +572,10 @@ namespace Game
             Console.Write(GetMinos(_[1]));
             Console.SetCursorPosition(0, 2);
             Console.Write(GetMinos(_[2]));
+        }
+        private static void DrawNextPieces()
+        {
+            // TODO
         }
         private static string GetMinos(bool[] minoTypes)
         {
