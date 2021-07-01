@@ -3,6 +3,7 @@ using System.Timers;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Linq;
+using System.Diagnostics;
 
 namespace Game
 {
@@ -11,14 +12,14 @@ namespace Game
     {
         public static bool paused = false;
         private static Timer frameTimer;
-        const uint ENABLE_QUICK_EDIT = 0x0040;
-        const int STD_INPUT_HANDLE = -10;
         static void Main()
         {
             #region Setup console
             DisableQuickEdit(null, null);
             Console.CursorVisible = false;
             Console.ForegroundColor = ConsoleColor.Green;
+            Console.SetWindowSize(50, 30);
+            DisableResize();
             #endregion
             #region Main Menu
             Menu.Main.Start();
@@ -29,7 +30,6 @@ namespace Game
             BagRandomizer.Setup();
             Matrix.Setup();
             CurrentPiece.Setup();
-            CurrentPiece.LockPiece(null, null);
             CurrentPiece.UpdatePiece();
             HoldPiece.Setup();
             Drawer.Setup();
@@ -42,10 +42,14 @@ namespace Game
             while (true)
             {
                 Drawer.DrawToConsole();
+                Console.SetWindowSize(50, 30);
+                Console.CursorVisible = false;
             }
             #endregion
         }
         #region Disable Selecting Text
+        const uint ENABLE_QUICK_EDIT = 0x0040;
+        const int STD_INPUT_HANDLE = -10;
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern IntPtr GetStdHandle(int nStdHandle);
 
@@ -83,6 +87,28 @@ namespace Game
         public static void DisableQuickEdit(object o, ElapsedEventArgs _)
         {
             Go();
+        }
+        #endregion
+        #region Disable resizing
+        [DllImport("user32.dll")]
+        public static extern int DeleteMenu(IntPtr hMenu, int nPosition, int wFlags);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
+
+        [DllImport("kernel32.dll", ExactSpelling = true)]
+        private static extern IntPtr GetConsoleWindow();
+
+        static void DisableResize()
+        {
+            IntPtr handle = GetConsoleWindow();
+            IntPtr sysMenu = GetSystemMenu(handle, false);
+
+            if (handle != IntPtr.Zero)
+            {
+                DeleteMenu(sysMenu, 0xF030, 0x00000000);
+                DeleteMenu(sysMenu, 0xF000, 0x00000000);
+            }
         }
         #endregion
     }
@@ -144,6 +170,14 @@ namespace Game
         public static int lines;
         public static int lockDelayResets;
         public static bool useSonicDrop;
+        /// <summary>
+        /// 0 = left mino of piece border is on left part of board. If positive, then left mino of piece border is on the right of left part of board. Can go negative.
+        /// </summary>
+        public static int xoffset;
+        /// <summary>
+        /// 0 = bottom mino of piece border is on bottom of board. If positive, then bottom left mino of piece border is on top of bottom of board. Can go negative.
+        /// </summary>
+        public static int yoffset;
         public static int levelNum {
             get
             {
@@ -311,6 +345,7 @@ namespace Game
                 Left();
                 Left();
                 Left();
+                Left();
             }
             else
             {
@@ -330,20 +365,13 @@ namespace Game
                 Right();
                 Right();
                 Right();
+                Right();
             }
             else
             {
                 Right();
                 rightDasTimer = Controls.arr;
             }
-        }
-        public static void CancelLeftDas()
-        {
-            leftDasTimer = Controls.das;
-        }
-        public static void CancelRightDas()
-        {
-            rightDasTimer = Controls.das;
         }
         /// <summary>
         /// Get info of a future piece, up to 7 pieces
@@ -367,16 +395,12 @@ namespace Game
         }
         public static void ResetLockDelay()
         {
-            if(landed)
+            if(landed && lockDelayResets < 30)
             {
                 lockDelayTimer = new Timer(level.lockDelay * 16.6666666666666);
                 lockDelayTimer.Elapsed += LockPiece;
                 lockDelayTimer.Enabled = true;
                 lockDelayResets++;
-                if (lockDelayResets > 75)
-                {
-                    LockPiece(null, null);
-                }
             }
             else
             {
@@ -427,11 +451,6 @@ namespace Game
                 }
             }
             return false;
-        }
-        public static void Unpause()
-        {
-            CancelLeftDas();
-            CancelRightDas();
         }
         public static void ClearLine()
         {
@@ -524,14 +543,92 @@ namespace Game
                 Console.Write("|                    |");
             }
             DrawToConsole();
-            System.Threading.Thread.Sleep(250);
-            Console.SetCursorPosition(12, 20);
+            System.Threading.Thread.Sleep(750);
+            Console.SetCursorPosition(18, 12);
             Console.Write("R E A D Y");
-            System.Threading.Thread.Sleep(1000);
-            Console.SetCursorPosition(12, 20);
+            System.Threading.Thread.Sleep(760);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("[ E A D ]");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("<[E A D]>");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("-<[ A ]>-");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("--<[A]>--");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("--<[■]>--");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("---<■>---");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("----■----");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("---------");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write(" ------- ");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("  -----  ");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("   ---   ");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("   G-O   ");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
             Console.Write("   G O   ");
-            System.Threading.Thread.Sleep(1000);
-            Console.SetCursorPosition(12, 20);
+            System.Threading.Thread.Sleep(840);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("-  G O  -");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("-- G O --");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("---G O---");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("--<G O>--");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("--[G O]--");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("-<[G O]>-");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("--<[■]>--");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("---<■>---");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("----■----");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("---------");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write(" ------- ");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("  -----  ");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("   ---   ");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("    -    ");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
             Console.Write("         ");
         }
         public static void DrawToConsole()
@@ -672,10 +769,10 @@ namespace Game
             new bool[5][] { new bool[5], new bool[5], new bool[5], new bool[5], new bool[5] }, // cw
             new bool[5][] { new bool[5], new bool[5], new bool[5], new bool[5], new bool[5] }, // 180
             new bool[5][] { new bool[5], new bool[5], new bool[5], new bool[5], new bool[5] }, // ccw
-        };
-        public Offset[][] cwKicks;
-        public Offset[][] ccwKicks;
-        public Offset[][] flipKicks; // kicks for 180 rot
+        }; // States for each rotation
+        public Offset[][] cwKicks; // Clockwise kicks
+        public Offset[][] ccwKicks; // Counterclockwise kicks
+        public Offset[][] flipKicks; // 180 degree kicks
         public Piece(bool[][][] piece, Offset[][] cwKicks, Offset[][] ccwKicks, Offset[][] flipKicks)
         {
             this.piece = piece;
@@ -683,6 +780,7 @@ namespace Game
             this.ccwKicks = ccwKicks;
             this.flipKicks = flipKicks;
         }
+        #region Piece List
         public static Piece Z;
         public static Piece L;
         public static Piece O;
@@ -691,8 +789,11 @@ namespace Game
         public static Piece J;
         public static Piece T;
         public static Piece None;
+        #endregion
         public static void Setup()
         {
+            #region Setup Piece Properties
+            #region Z
             Z = new Piece(
                 new bool[4][][]{
                     new bool[5][] {
@@ -746,35 +847,37 @@ namespace Game
                     new Offset[13] { new Offset(0, 0), new Offset(-1,  0), new Offset( 0,  1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1, -2), new Offset( 0, -1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1,  2), new Offset(-1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // L => R
                 }
                 );
+            #endregion
+            #region L
             L = new Piece(
                 new bool[4][][]{
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, true,  false },
-                        new bool[5] { false, true,  true,  true,  false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, // 
+                        new bool[5] { false, false, false, true,  false }, // ####[]
+                        new bool[5] { false, true,  true,  true,  false }, // [][][]
+                        new bool[5] { false, false, false, false, false }, // ######
+                        new bool[5] { false, false, false, false, false }, // 
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false }, // TODO
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, // 
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, false, false, false, false }, // 
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, // 
+                        new bool[5] { false, false, false, false, false }, // ######
+                        new bool[5] { false, true,  true,  true,  false }, // [][][]
+                        new bool[5] { false, true,  false, false, false }, // []####
+                        new bool[5] { false, false, false, false, false }, // 
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, // 
+                        new bool[5] { false, true,  true,  false, false }, // [][]##
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, false, false, false, false }, // 
                         },
                 },
                 new Offset[4][]
@@ -799,35 +902,37 @@ namespace Game
                     new Offset[13] { new Offset(0, 0), new Offset(-1,  0), new Offset( 0,  1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1, -2), new Offset( 0, -1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1,  2), new Offset(-1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // L => R
                 }
                 );
+            #endregion
+            #region O
             O = new Piece(
                 new bool[4][][]{
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, // 
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, false, false, false, false }, // ######
+                        new bool[5] { false, false, false, false, false }, // 
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, // 
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, false, false, false, false }, // ######
+                        new bool[5] { false, false, false, false, false }, // 
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, // 
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, false, false, false, false }, // ######
+                        new bool[5] { false, false, false, false, false }, // 
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, // 
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, false, false, false, false }, // ######
+                        new bool[5] { false, false, false, false, false }, // 
                         },
                 },
                 new Offset[4][]
@@ -852,35 +957,37 @@ namespace Game
                     new Offset[13] { new Offset(0, 0), new Offset(-1,  0), new Offset( 0,  1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1, -2), new Offset( 0, -1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1,  2), new Offset(-1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // L => R
                 }
                 );
+            #endregion
+            #region S
             S = new Piece(
                 new bool[4][][]{
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, //
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, true,  true,  false, false }, // [][]##
+                        new bool[5] { false, false, false, false, false }, // ######
+                        new bool[5] { false, false, false, false, false }, //
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, //
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, false, false, true,  false }, // ####[]
+                        new bool[5] { false, false, false, false, false }, //
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, //
+                        new bool[5] { false, false, false, false, false }, // ######
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, true,  true,  false, false }, // [][]##
+                        new bool[5] { false, false, false, false, false }, //
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, //
+                        new bool[5] { false, true,  false, false, false }, // []####
+                        new bool[5] { false, true,  true,  false, false }, // [][]##
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, false, false, false, false }, //
                         },
                 },
                 new Offset[4][]
@@ -905,88 +1012,92 @@ namespace Game
                     new Offset[13] { new Offset(0, 0), new Offset(-1,  0), new Offset( 0,  1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1, -2), new Offset( 0, -1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1,  2), new Offset(-1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // L => R
                 }
                 );
+            #endregion
+            #region I
             I = new Piece(
                 new bool[4][][]{
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, // ##########
+                        new bool[5] { false, false, false, false, false }, // ##########
+                        new bool[5] { false, true,  true,  true,  true  }, // ##[][][][]
+                        new bool[5] { false, false, false, false, false }, // ##########
+                        new bool[5] { false, false, false, false, false }, // ##########
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, // ##########
+                        new bool[5] { false, false, false, true,  false }, // ######[]##
+                        new bool[5] { false, false, false, true,  false }, // ######[]##
+                        new bool[5] { false, false, false, true,  false }, // ######[]##
+                        new bool[5] { false, false, false, true,  false }, // ######[]##
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, // ##########
+                        new bool[5] { false, false, false, false, false }, // ##########
+                        new bool[5] { false, false, false, false, false }, // ##########
+                        new bool[5] { false, true,  true,  true,  true  }, // ##[][][][]
+                        new bool[5] { false, false, false, false, false }, // ##########
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, // ##########
+                        new bool[5] { false, false, true,  false, false }, // ####[]####
+                        new bool[5] { false, false, true,  false, false }, // ####[]####
+                        new bool[5] { false, false, true,  false, false }, // ####[]####
+                        new bool[5] { false, false, true,  false, false }, // ####[]####
                         },
-                },
-                new Offset[4][]
-                {                          // TODO
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
                 },
                 new Offset[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(-2, 0), new Offset( 1, 0), new Offset(-2,-1), new Offset( 1, 2) }, // 0 => R
+                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset( 2, 0), new Offset(-1, 2), new Offset( 2,-1) }, // R => 2
+                    new Offset[5] { new Offset(0, 0), new Offset( 2, 0), new Offset(-1, 0), new Offset( 2, 1), new Offset(-1,-2) }, // 2 => L
+                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset(-2, 0), new Offset( 1,-2), new Offset(-2, 1) }, // L => 0
                 },
                 new Offset[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
-                    new Offset[5] { new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0), new Offset(0, 0) },
+                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset( 2, 0), new Offset(-1, 2), new Offset( 2,-1) }, // 0 => L
+                    new Offset[5] { new Offset(0, 0), new Offset( 2, 0), new Offset(-1, 0), new Offset( 2, 1), new Offset(-1,-2) }, // R => 0
+                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset(-2, 0), new Offset( 1,-2), new Offset(-2, 1) }, // 2 => R
+                    new Offset[5] { new Offset(0, 0), new Offset(-2, 0), new Offset( 1, 0), new Offset(-2,-1), new Offset( 1, 2) }, // L => 2
+                },
+                new Offset[4][]
+                {
+                    new Offset[6] { new Offset(0, 0), new Offset(-1, 0), new Offset(-2, 0), new Offset( 1, 0), new Offset( 2, 0), new Offset( 0,-1) }, // 0 => 2
+                    new Offset[6] { new Offset(0, 0), new Offset( 0,-1), new Offset( 0,-2), new Offset( 0, 1), new Offset( 0, 2), new Offset(-1, 0) }, // R => L
+                    new Offset[6] { new Offset(0, 0), new Offset( 1, 0), new Offset( 2, 0), new Offset(-1, 0), new Offset(-2, 0), new Offset( 0, 1) }, // 2 => 0
+                    new Offset[6] { new Offset(0, 0), new Offset( 0,-1), new Offset( 0,-2), new Offset( 0, 1), new Offset( 0, 2), new Offset( 1, 0) }, // L => R
                 }
                 );
+            #endregion
+            #region J
             J = new Piece(
                 new bool[4][][]{
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, //
+                        new bool[5] { false, true,  false, false, false }, // []####
+                        new bool[5] { false, true,  true,  true,  false }, // [][][]
+                        new bool[5] { false, false, false, false, false }, // ######
+                        new bool[5] { false, false, false, false, false }, //
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, //
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, false, false, false, false }, //
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, //
+                        new bool[5] { false, false, false, false, false }, // ######
+                        new bool[5] { false, true,  true,  true,  false }, // [][][]
+                        new bool[5] { false, false, false, true,  false }, // ####[]
+                        new bool[5] { false, false, false, false, false }, //
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, // 
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, true,  true,  false, false }, // [][]##
+                        new bool[5] { false, false, false, false, false }, // 
                         },
                 },
                 new Offset[4][]
@@ -1011,35 +1122,37 @@ namespace Game
                     new Offset[13] { new Offset(0, 0), new Offset(-1,  0), new Offset( 0,  1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1, -2), new Offset( 0, -1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1,  2), new Offset(-1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // L => R
                 }
                 );
+            #endregion
+            #region T
             T = new Piece(
                 new bool[4][][]{
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, //
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, true,  true,  true,  false }, // [][][]
+                        new bool[5] { false, false, false, false, false }, // ######
+                        new bool[5] { false, false, false, false, false }, //
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, //
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, false, true,  true,  false }, // ##[][]
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, false, false, false, false }, //
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, //
+                        new bool[5] { false, false, false, false, false }, // ######
+                        new bool[5] { false, true,  true,  true,  false }, // [][][]
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, false, false, false, false }, //
                         },
                     new bool[5][] {
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
-                        new bool[5] { false, false, false, false, false },
+                        new bool[5] { false, false, false, false, false }, //
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, true,  true,  false, false }, // [][]##
+                        new bool[5] { false, false, true,  false, false }, // ##[]##
+                        new bool[5] { false, false, false, false, false }, //
                         },
                 },
                 new Offset[4][]
@@ -1064,6 +1177,8 @@ namespace Game
                     new Offset[13] { new Offset(0, 0), new Offset(-1,  0), new Offset( 0,  1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1, -2), new Offset( 0, -1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1,  2), new Offset(-1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // L => R
                 }
                 );
+            #endregion
+            #region None
             None = new Piece(
                 new bool[4][][]{
                     new bool[5][] {
@@ -1117,6 +1232,8 @@ namespace Game
                     new Offset[1] { new Offset(0, 0) },
                 }
                 );
+            #endregion
+            #endregion
         }
         public static Piece GetPiece(char pieceChar)
         {
@@ -1462,9 +1579,9 @@ class Offset
 {
     public int x;
     public int y;
-    public Offset(int _x, int _y)
+    public Offset(int x, int y)
     {
-        x = _x;
-        y = _y;
+        this.x = x;
+        this.y = y;
     }
 }
