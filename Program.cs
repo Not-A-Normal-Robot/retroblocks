@@ -27,8 +27,8 @@ namespace Game
             Console.Clear();
             #endregion
             #region Setup game
-            Console.SetWindowSize(45, 30);
-            Console.SetBufferSize(45, 30);
+            Console.SetWindowSize(47, 30);
+            Console.SetBufferSize(47, 30);
             Piece.Setup();
             BagRandomizer.Setup();
             Matrix.Setup();
@@ -45,7 +45,6 @@ namespace Game
             while (true)
             {
                 Drawer.DrawToConsole();
-                Console.SetWindowSize(50, 30);
                 Console.CursorVisible = false;
             }
             #endregion
