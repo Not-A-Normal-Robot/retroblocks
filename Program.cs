@@ -19,6 +19,7 @@ namespace Game
             Console.CursorVisible = false;
             Console.ForegroundColor = ConsoleColor.Green;
             Console.SetWindowSize(50, 30);
+            Console.SetBufferSize(50, 30);
             DisableResize();
             #endregion
             #region Main Menu
@@ -26,6 +27,8 @@ namespace Game
             Console.Clear();
             #endregion
             #region Setup game
+            Console.SetWindowSize(45, 30);
+            Console.SetBufferSize(45, 30);
             Piece.Setup();
             BagRandomizer.Setup();
             Matrix.Setup();
