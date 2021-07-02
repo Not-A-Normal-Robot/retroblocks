@@ -27,8 +27,8 @@ namespace Game
             Console.Clear();
             #endregion
             #region Setup game
-            Console.SetWindowSize(47, 23);
-            Console.SetBufferSize(47, 23);
+            Console.SetWindowSize(47, 24);
+            Console.SetBufferSize(47, 24);
             Piece.Setup();
             BagRandomizer.Setup();
             Matrix.Setup();
