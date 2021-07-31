@@ -12,6 +12,7 @@ namespace Game
     {
         public static bool paused = false;
         private static Timer frameTimer;
+        public static string mode;
         static void Main()
         {
             #region Setup console
@@ -29,6 +30,7 @@ namespace Game
             #region Setup game
             Console.SetWindowSize(48, 25);
             Console.SetBufferSize(48, 25);
+            Levels.Setup();
             Piece.Setup();
             BagRandomizer.Setup();
             Matrix.Setup();
@@ -42,6 +44,7 @@ namespace Game
             frameTimer.Elapsed += CurrentPiece.UpdatePiece;
             frameTimer.AutoReset = true;
             frameTimer.Enabled = true;
+            CurrentPiece.LockPiece(null,null);
             while (true)
             {
                 Drawer.DrawToConsole();
@@ -139,7 +142,18 @@ namespace Game
         public static bool[][] nextPieceSpawn;
         public static char piece;
         public static int piecenum;
-        public static int rotState;
+        private static int _rotState;
+        public static int rotState
+        {
+            get
+            {
+                return _rotState;
+            }
+            set
+            {
+                _rotState = value % 4;
+            }
+        }
         public static bool landed
         {
             get
@@ -168,7 +182,7 @@ namespace Game
         private static int rightDasTimer;
         public static Levels level;
         private static Timer gravTimer;
-        private static Timer lockDelayTimer;
+        public static int lockDelayTimer;
         public static int lines;
         public static int lockDelayResets;
         public static bool useSonicDrop;
@@ -180,6 +194,10 @@ namespace Game
         /// 0 = bottom mino of piece border is on bottom of board. If positive, then bottom left mino of piece border is on top of bottom of board. Can go negative.
         /// </summary>
         public static int yoffset;
+        public static int score;
+        public static int areTimer;
+        public static int lineAreTimer;
+        public static bool[] lined;
         public static int levelNum {
             get
             {
@@ -192,10 +210,41 @@ namespace Game
         }
         public static void UpdatePiece()
         {
-            if (landed && (lockDelayTimer == null || !lockDelayTimer.Enabled))
+            if (landed)
             {
-                lockDelayTimer = new Timer(level.lockDelay * 16.6666666666666);
-                lockDelayTimer.Enabled = true;
+                lockDelayTimer++;
+                if (lockDelayTimer > level.lockDelay)
+                {
+                    LockPiece(null, null);
+                }
+            }
+            else
+            {
+                lockDelayTimer = 0;
+            }
+            if (level.g >= 1)
+            {
+                for (int i = 0; i < (int)Math.Floor(level.g); i++)
+                {
+                    Fall(null, null);
+                }
+            }
+            if(lineAreTimer >= 0)
+            {
+                lineAreTimer++;
+            }
+            else if (areTimer >= 0)
+            {
+                areTimer++;
+            }
+            if (lineAreTimer > level.lineAre)
+            {
+                // TODO
+            }
+            if(areTimer > level.are)
+            {
+                Spawn();
+                areTimer = -1;
             }
         }
         public static void Setup()
@@ -221,6 +270,7 @@ namespace Game
                 nextPieceSpawn[i] = new bool[40];
             }
             #endregion
+            lined = new bool[40];
             piece = BagRandomizer.output[BagRandomizer.current][0];
             piecenum = 0;
             leftDasTimer = Controls.das;
@@ -230,6 +280,7 @@ namespace Game
             gravTimer = new Timer(1 / level.g * 16.6666);
             gravTimer.AutoReset = true;
             gravTimer.Elapsed += Fall;
+            score = 0;
         }
         public static void NextPiece()
         {
@@ -271,6 +322,7 @@ namespace Game
                     }
                 }
                 state = newState;
+                yoffset--;
             }
         }
         public static void LockPiece(object o, ElapsedEventArgs _)
@@ -278,6 +330,7 @@ namespace Game
             while(!landed)
             {
                 Fall(null, null);
+                score += 2;
             }
             for(int y = 0; y < 40; y++)
             {
@@ -290,11 +343,58 @@ namespace Game
                     }
                 }
             }
-            Spawn();
+            int linesCleared = 0;
+            for(int y = 0; y < 40; y++)
+            {
+                for(int x = 0; Matrix.state[x][y] == true && x < 10; x++)
+                {
+                    if(x == 9)
+                    {
+                        ClearLine(y);
+                        linesCleared++;
+                        lined[y] = true;
+                        for(int e = 0; e < 10; e++)
+                        {
+                            Matrix.state[e][y] = false;
+                        }
+                    }
+                }
+            }
+            switch (linesCleared)
+            {
+                case 0:
+                    break;
+                case 1:
+                    lines++;
+                    score += (int)Math.Floor(lines / 10d) * 100;
+                    break;
+                case 2:
+                    lines += 2;
+                    score += (int)Math.Floor(lines / 10d) * 100;
+                    break;
+                case 3:
+                    lines += 3;
+                    score += (int)Math.Floor(lines / 10d) * 100;
+                    break;
+                case 4:
+                    lines += 4;
+                    score += (int)Math.Floor(lines / 10d) * 100;
+                    break;
+            }
+                throw new ArgumentOutOfRangeException("5+ line clear!");
+
         }
         public static void Spawn()
         {
             rotState = 0;
+            if (NativeKeyboard.IsKeyDown(Controls.rotCcw))
+            {
+                rotState = 3;
+            }
+            else if (NativeKeyboard.IsKeyDown(Controls.rot180))
+            {
+
+            }
             for(int x = 0; x < 5; x++)
             {
                 for(int y = 0; y < 5; y++)
@@ -308,7 +408,7 @@ namespace Game
             {
                 for (int y = 0; y < 5; y++)
                 {
-                    nextPieceSpawn[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum]).piece[rotState][y][x];
+                    nextPieceSpawn[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum]).piece[0][y][x];
                 }
             }
         }
@@ -339,7 +439,6 @@ namespace Game
         {
             if(Controls.arr == 0)
             {
-                Left();
                 Left();
                 Left();
                 Left();
@@ -399,16 +498,12 @@ namespace Game
         {
             if(landed && lockDelayResets < 30)
             {
-                lockDelayTimer = new Timer(level.lockDelay * 16.6666666666666);
-                lockDelayTimer.Elapsed += LockPiece;
-                lockDelayTimer.Enabled = true;
+                lockDelayTimer = 0;
                 lockDelayResets++;
             }
-            else
+            if(!landed)
             {
-                lockDelayTimer = new Timer(level.lockDelay * 16.6666666666666);
-                lockDelayTimer.Elapsed += LockPiece;
-                lockDelayTimer.Enabled = false;
+                lockDelayTimer = 0;
                 lockDelayResets++;
             }
         }
@@ -454,7 +549,7 @@ namespace Game
             }
             return false;
         }
-        public static void ClearLine()
+        public static void ClearLine(int y)
         {
             if (level.g < 1)
             {
@@ -479,9 +574,28 @@ namespace Game
                 {
                     for (int x = 0; x < 10; x++)
                     {
-                        if (Matrix.state[x][y] || CurrentPiece.state[x][y])
+                        if (Matrix.state[x][y])
                         {
-                            xcache += "[]";
+                            xcache += "██";
+                        }
+                        else if (CurrentPiece.state[x][y])
+                        {
+                            if(CurrentPiece.lockDelayTimer < 0.25 * CurrentPiece.level.lockDelay)
+                            {
+                                xcache += "[]";
+                            }
+                            else if (CurrentPiece.lockDelayTimer < 0.5 * CurrentPiece.level.lockDelay)
+                            {
+                                xcache += "░░";
+                            }
+                            else if (CurrentPiece.lockDelayTimer < 0.75 * CurrentPiece.level.lockDelay)
+                            {
+                                xcache += "▒▒";
+                            }
+                            else
+                            {
+                                xcache += "▓▓";
+                            }
                         }
                         else if (CurrentPiece.ghost[x][y])
                         {
@@ -545,7 +659,53 @@ namespace Game
                 Console.Write("|                    |");
             }
             DrawToConsole();
+            #region Starting Animation
             System.Threading.Thread.Sleep(750);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("-       -");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("--     --");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("---   ---");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("---- ----");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("---------");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("---------");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("---------");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("----■----");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("---<■>---");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("---[■]---");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("--<[■]>--");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("--<[A]>--");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("-<[ A ]>-");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("<[E A D]>");
+            System.Threading.Thread.Sleep(20);
+            Console.SetCursorPosition(18, 12);
+            Console.Write("[ E A D ]");
+            System.Threading.Thread.Sleep(20);
             Console.SetCursorPosition(18, 12);
             Console.Write("R E A D Y");
             System.Threading.Thread.Sleep(760);
@@ -632,6 +792,7 @@ namespace Game
             System.Threading.Thread.Sleep(20);
             Console.SetCursorPosition(18, 12);
             Console.Write("         ");
+            #endregion
         }
         public static void DrawToConsole()
         {
@@ -686,7 +847,6 @@ namespace Game
             return _;
         }
     }
-    // Produces a random sequence of tetriminos using the 7bag method.
     static class BagRandomizer
     {
         public static string[] output = new string[2];
@@ -754,13 +914,14 @@ namespace Game
         }
         #endregion
     }
-    // Stores data about hold piece
     static class HoldPiece
     {
         public static char current;
+        public static bool used;
         public static void Setup()
         {
             current = 'N';
+            used = false;
         }
     }
     class Piece
@@ -772,15 +933,20 @@ namespace Game
             new bool[5][] { new bool[5], new bool[5], new bool[5], new bool[5], new bool[5] }, // 180
             new bool[5][] { new bool[5], new bool[5], new bool[5], new bool[5], new bool[5] }, // ccw
         }; // States for each rotation
-        public Offset[][] cwKicks; // Clockwise kicks
-        public Offset[][] ccwKicks; // Counterclockwise kicks
-        public Offset[][] flipKicks; // 180 degree kicks
-        public Piece(bool[][][] piece, Offset[][] cwKicks, Offset[][] ccwKicks, Offset[][] flipKicks)
+        /// <summary>
+        /// Corners to detect for spin detection. 0, 0 is bottom left.
+        /// </summary>
+        public Vector2D[] cornersToCheck; // Check corners for spin
+        public Vector2D[][] cwKicks; // Clockwise kicks
+        public Vector2D[][] ccwKicks; // Counterclockwise kicks
+        public Vector2D[][] flipKicks; // 180 degree kicks
+        public Piece(bool[][][] piece, Vector2D[][] cwKicks, Vector2D[][] ccwKicks, Vector2D[][] flipKicks, Vector2D[] cornerDetection)
         {
             this.piece = piece;
             this.cwKicks = cwKicks;
             this.ccwKicks = ccwKicks;
             this.flipKicks = flipKicks;
+            this.cornersToCheck = cornerDetection;
         }
         #region Piece List
         public static Piece Z;
@@ -797,6 +963,7 @@ namespace Game
             #region Setup Piece Properties
             #region Z
             Z = new Piece(
+                #region States
                 new bool[4][][]{
                     new bool[5][] {
                         new bool[5] { false, false, false, false, false }, // 
@@ -827,27 +994,33 @@ namespace Game
                         new bool[5] { false, false, false, false, false }, //
                         },
                 },
-                new Offset[4][]
+            #endregion
+                #region Kicks
+                new Vector2D[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1,  1), new Offset(0, -2), new Offset(-1, -2) }, // 0 => R
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1, -1), new Offset(0,  2), new Offset( 1,  2) }, // R => 2
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // 2 => L
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // L => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 2
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 2 => L
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // 0 => L
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1, -1), new Offset(0,  2), new Offset( 1,  2) }, // R => 0
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1,  1), new Offset(0, -2), new Offset(-1, -2) }, // 2 => R
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1, -1), new Offset(0,  2), new Offset(-1,  2) }, // L => 2
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 0 => L
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 2 => R
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1, -1), new Vector2D(0,  2), new Vector2D(-1,  2) }, // L => 2
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {                    // 1                 2                      3                   4                       5                  6                   7                   8                  9                 10                  11                   12                      13
-                    new Offset[13] { new Offset(0, 0), new Offset( 0,  1), new Offset( 1,  0), new Offset( 2,  0), new Offset( 1, -1), new Offset( 2, -1), new Offset(-1,  0), new Offset(-2,  0), new Offset(-1, -1), new Offset(-2, -1), new Offset( 0, -1), new Offset( 3,  0), new Offset(-3,  0) },  // 0 => 2
-                    new Offset[13] { new Offset(0, 0), new Offset( 1,  0), new Offset( 0, -1), new Offset( 0, -2), new Offset(-1, -1), new Offset(-1, -2), new Offset( 0,  1), new Offset( 0,  2), new Offset(-1,  1), new Offset(-1,  2), new Offset( 1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // R => L
-                    new Offset[13] { new Offset(0, 0), new Offset( 0, -1), new Offset(-1,  0), new Offset(-2,  0), new Offset(-1,  1), new Offset(-2,  1), new Offset( 1,  0), new Offset( 2,  0), new Offset( 1,  1), new Offset( 2,  1), new Offset( 0,  1), new Offset(-3,  0), new Offset( 3,  0) },  // 2 => 0
-                    new Offset[13] { new Offset(0, 0), new Offset(-1,  0), new Offset( 0,  1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1, -2), new Offset( 0, -1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1,  2), new Offset(-1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // L => R
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1, -1), new Vector2D( 2, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1, -1), new Vector2D(-2, -1), new Vector2D( 0, -1), new Vector2D( 3,  0), new Vector2D(-3,  0) },  // 0 => 2
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 1,  0), new Vector2D( 0, -1), new Vector2D( 0, -2), new Vector2D(-1, -1), new Vector2D(-1, -2), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D(-1,  1), new Vector2D(-1,  2), new Vector2D( 1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // R => L
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1,  1), new Vector2D(-2,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1,  1), new Vector2D( 2,  1), new Vector2D( 0,  1), new Vector2D(-3,  0), new Vector2D( 3,  0) },  // 2 => 0
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D(-1,  0), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1, -2), new Vector2D( 0, -1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1,  2), new Vector2D(-1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // L => R
                 }
+                #endregion
+                #region Corner detection
+
+                #endregion
                 );
             #endregion
             #region L
@@ -882,26 +1055,26 @@ namespace Game
                         new bool[5] { false, false, false, false, false }, // 
                         },
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1,  1), new Offset(0, -2), new Offset(-1, -2) }, // 0 => R
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1, -1), new Offset(0,  2), new Offset( 1,  2) }, // R => 2
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // 2 => L
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // L => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 2
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 2 => L
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // 0 => L
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1, -1), new Offset(0,  2), new Offset( 1,  2) }, // R => 0
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1,  1), new Offset(0, -2), new Offset(-1, -2) }, // 2 => R
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1, -1), new Offset(0,  2), new Offset(-1,  2) }, // L => 2
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 0 => L
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 2 => R
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1, -1), new Vector2D(0,  2), new Vector2D(-1,  2) }, // L => 2
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {                    // 1                 2                      3                   4                       5                  6                   7                   8                  9                 10                  11                   12                      13
-                    new Offset[13] { new Offset(0, 0), new Offset( 0,  1), new Offset( 1,  0), new Offset( 2,  0), new Offset( 1, -1), new Offset( 2, -1), new Offset(-1,  0), new Offset(-2,  0), new Offset(-1, -1), new Offset(-2, -1), new Offset( 0, -1), new Offset( 3,  0), new Offset(-3,  0) },  // 0 => 2
-                    new Offset[13] { new Offset(0, 0), new Offset( 1,  0), new Offset( 0, -1), new Offset( 0, -2), new Offset(-1, -1), new Offset(-1, -2), new Offset( 0,  1), new Offset( 0,  2), new Offset(-1,  1), new Offset(-1,  2), new Offset( 1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // R => L
-                    new Offset[13] { new Offset(0, 0), new Offset( 0, -1), new Offset(-1,  0), new Offset(-2,  0), new Offset(-1,  1), new Offset(-2,  1), new Offset( 1,  0), new Offset( 2,  0), new Offset( 1,  1), new Offset( 2,  1), new Offset( 0,  1), new Offset(-3,  0), new Offset( 3,  0) },  // 2 => 0
-                    new Offset[13] { new Offset(0, 0), new Offset(-1,  0), new Offset( 0,  1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1, -2), new Offset( 0, -1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1,  2), new Offset(-1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // L => R
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1, -1), new Vector2D( 2, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1, -1), new Vector2D(-2, -1), new Vector2D( 0, -1), new Vector2D( 3,  0), new Vector2D(-3,  0) },  // 0 => 2
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 1,  0), new Vector2D( 0, -1), new Vector2D( 0, -2), new Vector2D(-1, -1), new Vector2D(-1, -2), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D(-1,  1), new Vector2D(-1,  2), new Vector2D( 1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // R => L
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1,  1), new Vector2D(-2,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1,  1), new Vector2D( 2,  1), new Vector2D( 0,  1), new Vector2D(-3,  0), new Vector2D( 3,  0) },  // 2 => 0
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D(-1,  0), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1, -2), new Vector2D( 0, -1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1,  2), new Vector2D(-1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // L => R
                 }
                 );
             #endregion
@@ -937,26 +1110,26 @@ namespace Game
                         new bool[5] { false, false, false, false, false }, // 
                         },
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1,  1), new Offset(0, -2), new Offset(-1, -2) }, // 0 => R
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1, -1), new Offset(0,  2), new Offset( 1,  2) }, // R => 2
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // 2 => L
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // L => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 2
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 2 => L
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // 0 => L
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1, -1), new Offset(0,  2), new Offset( 1,  2) }, // R => 0
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1,  1), new Offset(0, -2), new Offset(-1, -2) }, // 2 => R
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1, -1), new Offset(0,  2), new Offset(-1,  2) }, // L => 2
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 0 => L
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 2 => R
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1, -1), new Vector2D(0,  2), new Vector2D(-1,  2) }, // L => 2
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {                    // 1                 2                      3                   4                       5                  6                   7                   8                  9                 10                  11                   12                      13
-                    new Offset[13] { new Offset(0, 0), new Offset( 0,  1), new Offset( 1,  0), new Offset( 2,  0), new Offset( 1, -1), new Offset( 2, -1), new Offset(-1,  0), new Offset(-2,  0), new Offset(-1, -1), new Offset(-2, -1), new Offset( 0, -1), new Offset( 3,  0), new Offset(-3,  0) },  // 0 => 2
-                    new Offset[13] { new Offset(0, 0), new Offset( 1,  0), new Offset( 0, -1), new Offset( 0, -2), new Offset(-1, -1), new Offset(-1, -2), new Offset( 0,  1), new Offset( 0,  2), new Offset(-1,  1), new Offset(-1,  2), new Offset( 1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // R => L
-                    new Offset[13] { new Offset(0, 0), new Offset( 0, -1), new Offset(-1,  0), new Offset(-2,  0), new Offset(-1,  1), new Offset(-2,  1), new Offset( 1,  0), new Offset( 2,  0), new Offset( 1,  1), new Offset( 2,  1), new Offset( 0,  1), new Offset(-3,  0), new Offset( 3,  0) },  // 2 => 0
-                    new Offset[13] { new Offset(0, 0), new Offset(-1,  0), new Offset( 0,  1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1, -2), new Offset( 0, -1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1,  2), new Offset(-1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // L => R
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1, -1), new Vector2D( 2, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1, -1), new Vector2D(-2, -1), new Vector2D( 0, -1), new Vector2D( 3,  0), new Vector2D(-3,  0) },  // 0 => 2
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 1,  0), new Vector2D( 0, -1), new Vector2D( 0, -2), new Vector2D(-1, -1), new Vector2D(-1, -2), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D(-1,  1), new Vector2D(-1,  2), new Vector2D( 1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // R => L
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1,  1), new Vector2D(-2,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1,  1), new Vector2D( 2,  1), new Vector2D( 0,  1), new Vector2D(-3,  0), new Vector2D( 3,  0) },  // 2 => 0
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D(-1,  0), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1, -2), new Vector2D( 0, -1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1,  2), new Vector2D(-1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // L => R
                 }
                 );
             #endregion
@@ -992,26 +1165,26 @@ namespace Game
                         new bool[5] { false, false, false, false, false }, //
                         },
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1,  1), new Offset(0, -2), new Offset(-1, -2) }, // 0 => R
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1, -1), new Offset(0,  2), new Offset( 1,  2) }, // R => 2
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // 2 => L
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // L => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 2
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 2 => L
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // 0 => L
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1, -1), new Offset(0,  2), new Offset( 1,  2) }, // R => 0
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1,  1), new Offset(0, -2), new Offset(-1, -2) }, // 2 => R
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1, -1), new Offset(0,  2), new Offset(-1,  2) }, // L => 2
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 0 => L
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 2 => R
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1, -1), new Vector2D(0,  2), new Vector2D(-1,  2) }, // L => 2
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {                    // 1                 2                      3                   4                       5                  6                   7                   8                  9                 10                  11                   12                      13
-                    new Offset[13] { new Offset(0, 0), new Offset( 0,  1), new Offset( 1,  0), new Offset( 2,  0), new Offset( 1, -1), new Offset( 2, -1), new Offset(-1,  0), new Offset(-2,  0), new Offset(-1, -1), new Offset(-2, -1), new Offset( 0, -1), new Offset( 3,  0), new Offset(-3,  0) },  // 0 => 2
-                    new Offset[13] { new Offset(0, 0), new Offset( 1,  0), new Offset( 0, -1), new Offset( 0, -2), new Offset(-1, -1), new Offset(-1, -2), new Offset( 0,  1), new Offset( 0,  2), new Offset(-1,  1), new Offset(-1,  2), new Offset( 1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // R => L
-                    new Offset[13] { new Offset(0, 0), new Offset( 0, -1), new Offset(-1,  0), new Offset(-2,  0), new Offset(-1,  1), new Offset(-2,  1), new Offset( 1,  0), new Offset( 2,  0), new Offset( 1,  1), new Offset( 2,  1), new Offset( 0,  1), new Offset(-3,  0), new Offset( 3,  0) },  // 2 => 0
-                    new Offset[13] { new Offset(0, 0), new Offset(-1,  0), new Offset( 0,  1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1, -2), new Offset( 0, -1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1,  2), new Offset(-1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // L => R
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1, -1), new Vector2D( 2, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1, -1), new Vector2D(-2, -1), new Vector2D( 0, -1), new Vector2D( 3,  0), new Vector2D(-3,  0) },  // 0 => 2
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 1,  0), new Vector2D( 0, -1), new Vector2D( 0, -2), new Vector2D(-1, -1), new Vector2D(-1, -2), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D(-1,  1), new Vector2D(-1,  2), new Vector2D( 1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // R => L
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1,  1), new Vector2D(-2,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1,  1), new Vector2D( 2,  1), new Vector2D( 0,  1), new Vector2D(-3,  0), new Vector2D( 3,  0) },  // 2 => 0
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D(-1,  0), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1, -2), new Vector2D( 0, -1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1,  2), new Vector2D(-1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // L => R
                 }
                 );
             #endregion
@@ -1047,26 +1220,26 @@ namespace Game
                         new bool[5] { false, false, true,  false, false }, // ####[]####
                         },
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset(-2, 0), new Offset( 1, 0), new Offset(-2,-1), new Offset( 1, 2) }, // 0 => R
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset( 2, 0), new Offset(-1, 2), new Offset( 2,-1) }, // R => 2
-                    new Offset[5] { new Offset(0, 0), new Offset( 2, 0), new Offset(-1, 0), new Offset( 2, 1), new Offset(-1,-2) }, // 2 => L
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset(-2, 0), new Offset( 1,-2), new Offset(-2, 1) }, // L => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-2, 0), new Vector2D( 1, 0), new Vector2D(-2,-1), new Vector2D( 1, 2) }, // 0 => R
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D( 2, 0), new Vector2D(-1, 2), new Vector2D( 2,-1) }, // R => 2
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 2, 0), new Vector2D(-1, 0), new Vector2D( 2, 1), new Vector2D(-1,-2) }, // 2 => L
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D(-2, 0), new Vector2D( 1,-2), new Vector2D(-2, 1) }, // L => 0
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset( 2, 0), new Offset(-1, 2), new Offset( 2,-1) }, // 0 => L
-                    new Offset[5] { new Offset(0, 0), new Offset( 2, 0), new Offset(-1, 0), new Offset( 2, 1), new Offset(-1,-2) }, // R => 0
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset(-2, 0), new Offset( 1,-2), new Offset(-2, 1) }, // 2 => R
-                    new Offset[5] { new Offset(0, 0), new Offset(-2, 0), new Offset( 1, 0), new Offset(-2,-1), new Offset( 1, 2) }, // L => 2
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D( 2, 0), new Vector2D(-1, 2), new Vector2D( 2,-1) }, // 0 => L
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 2, 0), new Vector2D(-1, 0), new Vector2D( 2, 1), new Vector2D(-1,-2) }, // R => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D(-2, 0), new Vector2D( 1,-2), new Vector2D(-2, 1) }, // 2 => R
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-2, 0), new Vector2D( 1, 0), new Vector2D(-2,-1), new Vector2D( 1, 2) }, // L => 2
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[6] { new Offset(0, 0), new Offset(-1, 0), new Offset(-2, 0), new Offset( 1, 0), new Offset( 2, 0), new Offset( 0,-1) }, // 0 => 2
-                    new Offset[6] { new Offset(0, 0), new Offset( 0,-1), new Offset( 0,-2), new Offset( 0, 1), new Offset( 0, 2), new Offset(-1, 0) }, // R => L
-                    new Offset[6] { new Offset(0, 0), new Offset( 1, 0), new Offset( 2, 0), new Offset(-1, 0), new Offset(-2, 0), new Offset( 0, 1) }, // 2 => 0
-                    new Offset[6] { new Offset(0, 0), new Offset( 0,-1), new Offset( 0,-2), new Offset( 0, 1), new Offset( 0, 2), new Offset( 1, 0) }, // L => R
+                    new Vector2D[6] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-2, 0), new Vector2D( 1, 0), new Vector2D( 2, 0), new Vector2D( 0,-1) }, // 0 => 2
+                    new Vector2D[6] { new Vector2D(0, 0), new Vector2D( 0,-1), new Vector2D( 0,-2), new Vector2D( 0, 1), new Vector2D( 0, 2), new Vector2D(-1, 0) }, // R => L
+                    new Vector2D[6] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 2, 0), new Vector2D(-1, 0), new Vector2D(-2, 0), new Vector2D( 0, 1) }, // 2 => 0
+                    new Vector2D[6] { new Vector2D(0, 0), new Vector2D( 0,-1), new Vector2D( 0,-2), new Vector2D( 0, 1), new Vector2D( 0, 2), new Vector2D( 1, 0) }, // L => R
                 }
                 );
             #endregion
@@ -1102,26 +1275,26 @@ namespace Game
                         new bool[5] { false, false, false, false, false }, // 
                         },
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1,  1), new Offset(0, -2), new Offset(-1, -2) }, // 0 => R
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1, -1), new Offset(0,  2), new Offset( 1,  2) }, // R => 2
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // 2 => L
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // L => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 2
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 2 => L
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // 0 => L
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1, -1), new Offset(0,  2), new Offset( 1,  2) }, // R => 0
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1,  1), new Offset(0, -2), new Offset(-1, -2) }, // 2 => R
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1, -1), new Offset(0,  2), new Offset(-1,  2) }, // L => 2
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 0 => L
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 2 => R
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1, -1), new Vector2D(0,  2), new Vector2D(-1,  2) }, // L => 2
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {                    // 1                 2                      3                   4                       5                  6                   7                   8                  9                 10                  11                   12                      13
-                    new Offset[13] { new Offset(0, 0), new Offset( 0,  1), new Offset( 1,  0), new Offset( 2,  0), new Offset( 1, -1), new Offset( 2, -1), new Offset(-1,  0), new Offset(-2,  0), new Offset(-1, -1), new Offset(-2, -1), new Offset( 0, -1), new Offset( 3,  0), new Offset(-3,  0) },  // 0 => 2
-                    new Offset[13] { new Offset(0, 0), new Offset( 1,  0), new Offset( 0, -1), new Offset( 0, -2), new Offset(-1, -1), new Offset(-1, -2), new Offset( 0,  1), new Offset( 0,  2), new Offset(-1,  1), new Offset(-1,  2), new Offset( 1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // R => L
-                    new Offset[13] { new Offset(0, 0), new Offset( 0, -1), new Offset(-1,  0), new Offset(-2,  0), new Offset(-1,  1), new Offset(-2,  1), new Offset( 1,  0), new Offset( 2,  0), new Offset( 1,  1), new Offset( 2,  1), new Offset( 0,  1), new Offset(-3,  0), new Offset( 3,  0) },  // 2 => 0
-                    new Offset[13] { new Offset(0, 0), new Offset(-1,  0), new Offset( 0,  1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1, -2), new Offset( 0, -1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1,  2), new Offset(-1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // L => R
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1, -1), new Vector2D( 2, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1, -1), new Vector2D(-2, -1), new Vector2D( 0, -1), new Vector2D( 3,  0), new Vector2D(-3,  0) },  // 0 => 2
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 1,  0), new Vector2D( 0, -1), new Vector2D( 0, -2), new Vector2D(-1, -1), new Vector2D(-1, -2), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D(-1,  1), new Vector2D(-1,  2), new Vector2D( 1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // R => L
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1,  1), new Vector2D(-2,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1,  1), new Vector2D( 2,  1), new Vector2D( 0,  1), new Vector2D(-3,  0), new Vector2D( 3,  0) },  // 2 => 0
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D(-1,  0), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1, -2), new Vector2D( 0, -1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1,  2), new Vector2D(-1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // L => R
                 }
                 );
             #endregion
@@ -1157,26 +1330,26 @@ namespace Game
                         new bool[5] { false, false, false, false, false }, //
                         },
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1,  1), new Offset(0, -2), new Offset(-1, -2) }, // 0 => R
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1, -1), new Offset(0,  2), new Offset( 1,  2) }, // R => 2
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // 2 => L
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // L => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 2
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 2 => L
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1,  1), new Offset(0, -2), new Offset( 1, -2) }, // 0 => L
-                    new Offset[5] { new Offset(0, 0), new Offset( 1, 0), new Offset( 1, -1), new Offset(0,  2), new Offset( 1,  2) }, // R => 0
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1,  1), new Offset(0, -2), new Offset(-1, -2) }, // 2 => R
-                    new Offset[5] { new Offset(0, 0), new Offset(-1, 0), new Offset(-1, -1), new Offset(0,  2), new Offset(-1,  2) }, // L => 2
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 0 => L
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 2 => R
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1, -1), new Vector2D(0,  2), new Vector2D(-1,  2) }, // L => 2
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {                    // 1                 2                      3                   4                       5                  6                   7                   8                  9                 10                  11                   12                      13
-                    new Offset[13] { new Offset(0, 0), new Offset( 0,  1), new Offset( 1,  0), new Offset( 2,  0), new Offset( 1, -1), new Offset( 2, -1), new Offset(-1,  0), new Offset(-2,  0), new Offset(-1, -1), new Offset(-2, -1), new Offset( 0, -1), new Offset( 3,  0), new Offset(-3,  0) },  // 0 => 2
-                    new Offset[13] { new Offset(0, 0), new Offset( 1,  0), new Offset( 0, -1), new Offset( 0, -2), new Offset(-1, -1), new Offset(-1, -2), new Offset( 0,  1), new Offset( 0,  2), new Offset(-1,  1), new Offset(-1,  2), new Offset( 1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // R => L
-                    new Offset[13] { new Offset(0, 0), new Offset( 0, -1), new Offset(-1,  0), new Offset(-2,  0), new Offset(-1,  1), new Offset(-2,  1), new Offset( 1,  0), new Offset( 2,  0), new Offset( 1,  1), new Offset( 2,  1), new Offset( 0,  1), new Offset(-3,  0), new Offset( 3,  0) },  // 2 => 0
-                    new Offset[13] { new Offset(0, 0), new Offset(-1,  0), new Offset( 0,  1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1, -2), new Offset( 0, -1), new Offset( 0,  2), new Offset( 1,  1), new Offset( 1,  2), new Offset(-1,  0), new Offset( 0,  3), new Offset( 0,  3) },  // L => R
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1, -1), new Vector2D( 2, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1, -1), new Vector2D(-2, -1), new Vector2D( 0, -1), new Vector2D( 3,  0), new Vector2D(-3,  0) },  // 0 => 2
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 1,  0), new Vector2D( 0, -1), new Vector2D( 0, -2), new Vector2D(-1, -1), new Vector2D(-1, -2), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D(-1,  1), new Vector2D(-1,  2), new Vector2D( 1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // R => L
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1,  1), new Vector2D(-2,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1,  1), new Vector2D( 2,  1), new Vector2D( 0,  1), new Vector2D(-3,  0), new Vector2D( 3,  0) },  // 2 => 0
+                    new Vector2D[13] { new Vector2D(0, 0), new Vector2D(-1,  0), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1, -2), new Vector2D( 0, -1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1,  2), new Vector2D(-1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // L => R
                 }
                 );
             #endregion
@@ -1212,26 +1385,26 @@ namespace Game
                         new bool[5] { false, false, false, false, false },
                         },
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[1] { new Offset(0, 0) },
-                    new Offset[1] { new Offset(0, 0) },
-                    new Offset[1] { new Offset(0, 0) },
-                    new Offset[1] { new Offset(0, 0) },
+                    new Vector2D[1] { new Vector2D(0, 0) },
+                    new Vector2D[1] { new Vector2D(0, 0) },
+                    new Vector2D[1] { new Vector2D(0, 0) },
+                    new Vector2D[1] { new Vector2D(0, 0) },
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[1] { new Offset(0, 0) },
-                    new Offset[1] { new Offset(0, 0) },
-                    new Offset[1] { new Offset(0, 0) },
-                    new Offset[1] { new Offset(0, 0) },
+                    new Vector2D[1] { new Vector2D(0, 0) },
+                    new Vector2D[1] { new Vector2D(0, 0) },
+                    new Vector2D[1] { new Vector2D(0, 0) },
+                    new Vector2D[1] { new Vector2D(0, 0) },
                 },
-                new Offset[4][]
+                new Vector2D[4][]
                 {
-                    new Offset[1] { new Offset(0, 0) },
-                    new Offset[1] { new Offset(0, 0) },
-                    new Offset[1] { new Offset(0, 0) },
-                    new Offset[1] { new Offset(0, 0) },
+                    new Vector2D[1] { new Vector2D(0, 0) },
+                    new Vector2D[1] { new Vector2D(0, 0) },
+                    new Vector2D[1] { new Vector2D(0, 0) },
+                    new Vector2D[1] { new Vector2D(0, 0) },
                 }
                 );
             #endregion
@@ -1264,91 +1437,74 @@ namespace Game
     {
         public double g;
         public int lockDelay;
-        public static Levels[] list = new Levels[70]
-        {
-            // Initially start with D grade
-            new Levels(0.01, 30), // 1
-            new Levels(0.02, 30),
-            new Levels(0.05, 30),
-            new Levels(0.08, 30),
-            new Levels(0.1 , 30),
-            new Levels(0.15, 30),
-            new Levels(0.2 , 30), // Grant C- grade
-            new Levels(0.3 , 30),
-            new Levels(0.4 , 30),
-            new Levels(0.5 , 30), // 10 - 666ms + 500ms <Grant C grade>
-            new Levels(0.75, 30),
-            new Levels(0.9 , 30),
-            new Levels(1   , 30),
-            new Levels(2   , 30), // Grant C+ grade
-            new Levels(4   , 30),
-            new Levels(7   , 30),
-            new Levels(10  , 30), // Grant B- grade
-            new Levels(14  , 30),
-            new Levels(19  , 30),
-            new Levels(22  , 30), // 20 - 500ms (2/s) // Grant B grade
-            new Levels(22  , 29),
-            new Levels(22  , 28), // Grant B+ grade
-            new Levels(22  , 27),
-            new Levels(22  , 26), // Grant A- grade
-            new Levels(22  , 25),
-            new Levels(22  , 24), // Grant A grade
-            new Levels(22  , 23),
-            new Levels(22  , 22), // Grant A+ grade
-            new Levels(22  , 21),
-            new Levels(22  , 20), // M10 (30) 333ms (3/s) <Grant S- grade>
-            new Levels(22  , 20),
-            new Levels(22  , 19), // Grant S grade
-            new Levels(22  , 19),
-            new Levels(22  , 18), // Grant S+ grade
-            new Levels(22  , 18),
-            new Levels(22  , 17), // Grant SS- grade
-            new Levels(22  , 17),
-            new Levels(22  , 16), // Grant SS grade
-            new Levels(22  , 16),
-            new Levels(22  , 15), // M20 (40) 250ms (4/s) <Grant SS+ grade>
-            new Levels(22  , 15),
-            new Levels(22  , 15), // Grant SSS- grade
-            new Levels(22  , 14),
-            new Levels(22  , 14), // Grant SSS grade
-            new Levels(22  , 13),
-            new Levels(22  , 13), // Grant SSS+ grade
-            new Levels(22  , 12),
-            new Levels(22  , 12),
-            new Levels(22  , 11),
-            new Levels(22  , 11), // M30 (50) 176ms (5.4/s) <Grant U- grade>
-            new Levels(22  , 11),
-            new Levels(22  , 10),
-            new Levels(22  , 10),
-            new Levels(22  , 10),
-            new Levels(22  , 10),
-            new Levels(22  ,  9), // Grant U grade
-            new Levels(22  ,  9),
-            new Levels(22  ,  9),
-            new Levels(22  ,  9),
-            new Levels(22  ,  8), // M40 (60) 128ms (7.8/s) <Grant U+ grade>
-            new Levels(22  ,  8),
-            new Levels(22  ,  7),
-            new Levels(22  ,  7),
-            new Levels(22  ,  7),
-            new Levels(22  ,  6),
-            new Levels(22  ,  6),
-            new Levels(22  ,  6),
-            new Levels(22  ,  5), // Grant Master grade
-            new Levels(22  ,  5),
-            new Levels(22  ,  5), // M50 (70)
-            // If time > 15 minutes, start invisible board challenge <less than ~1.9pps> <Master-A> <Master-S if complete>
-            // Else if time > 12 minutes, start invisible holdless challenge <~1.9pps> <Master-S grade> <Master-SS if complete>
-            // Else if time < 12 minutes, start previewless invisible holdless challenge <~2.4pps> <Master-X grade> <Master-M if complete> <Grand Master if done 5+ tetrises>
-        };
-        public Levels(double gravity, int lockdelay)
+        public int invisibleTimer;
+        public int are;
+        public int lineAre;
+        public bool pieceInvisible;
+        public bool hold;
+        public bool nextInvisible;
+        public int das;
+        public int arr;
+        public static Levels[] list;
+        public Levels(double gravity, int lockDelay, int invisibleTimer, int are, int lineAre, bool pieceInvisible, bool hold, bool nextInvisible, int das, int arr)
         {
             g = gravity;
-            lockDelay = lockdelay;
+            this.lockDelay = lockDelay;
+            this.invisibleTimer = invisibleTimer;
+            this.are = are;
+            this.lineAre = lineAre;
+            this.pieceInvisible = pieceInvisible;
+            this.hold = hold;
+            this.nextInvisible = nextInvisible;
+            this.das = Math.Min(Controls.das, das);
+            this.arr = Math.Min(Controls.arr, arr);
+        }
+        public static void Setup()
+        {
+            list = new Levels[80];
+            // TODO: make other levels when different mode
+            for (int i = 0; i < 80; i++)
+            {
+                if(i < 20)
+                {
+                    // Gravity = 16.666ms / (0.8 - ( Level * 0.007 ) ^ Level
+                    list[i] = new Levels(Math.Pow(16.666d / (0.8 - (i * 0.007)), i), 30, -1, 10, 20, false, true, false, 20, 15);
+                } // Actual Gravity Increase
+                else if(i < 26)
+                {                     // G    lockdelay  invis        are                   line are
+                    list[i] = new Levels(21, -3 * i + 87, -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, false, (int)(0.6 * (-3 * i + 87)), (int)(0.6 * (-3 * i + 87)));
+                } // 20G, Lock delay and ARE decrease
+                else if(i < 32)
+                {
+                    list[i] = new Levels(21, (int)(-0.5 * i + 24.5), -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, false, (int)(0.5 * (-0.5 * i + 24.5)), (int)(0.5 * (-0.5 * i + 24.5)));
+                } // Lock delay decreases slower
+                else if(i < 45)
+                {
+                    list[i] = new Levels(21, (int)(-0.2 * i + 15), -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, false, (int)(0.5 * (-0.2 * i + 15)), (int)(0.5 * (-0.2 * i + 15)));
+                } // Lock delay decreases even slower
+                else if(i < 60)
+                {
+                    list[i] = new Levels(21, 6, -20 * i + 1200, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, false, 3, 3);
+                } // Lock delay fixed at 6, pieces disappear slowly and gets faster
+                else if(i < 65)
+                {
+                    list[i] = new Levels(21, 6, 0, 2, 4, false, false, false, 3, 3);
+                } // Invisible board, holdless
+                else if(i < 70)
+                {
+                    list[i] = new Levels(21, 6, 0, 2, 4, true, false, false, 3, 3);
+                } // Invisible board and piece, holdless
+                else if(i < 80)
+                {
+                    list[i] = new Levels(21, 6, 0, 2, 4, true, false, true, 3, 3);
+                } // Blind tetris simulator
+                // Get GM grade
+            }
         }
     }
     public static class Controls
     {
+        #region Controls
         public static int left;
         public static int right;
         public static int hardDrop;
@@ -1369,7 +1525,7 @@ namespace Game
         }
         public readonly static int retry = 82;
         public readonly static int pause = 27;
-
+        #endregion
         public static void LoadControls()
         {
             if (!File.Exists("%appdata%\\Retroblocks\\config.txt"))
@@ -1448,6 +1604,7 @@ namespace Game
             useSonicDrop = false;
             SaveControls();
         }
+
     }
 }
 #region Keyboard integration
@@ -1577,11 +1734,11 @@ public static class HighScores
         SaveScores();
     }
 }
-class Offset
+class Vector2D
 {
     public int x;
     public int y;
-    public Offset(int x, int y)
+    public Vector2D(int x, int y)
     {
         this.x = x;
         this.y = y;
