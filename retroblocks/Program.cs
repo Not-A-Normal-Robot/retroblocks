@@ -17,6 +17,8 @@ namespace Game
         {
             #region Setup console
             DisableQuickEdit(null, null);
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Loading Retroblocks\nPlease wait...");
             Console.CursorVisible = false;
             Console.ForegroundColor = ConsoleColor.Green;
             Console.SetWindowSize(50, 30);
@@ -28,8 +30,8 @@ namespace Game
             Console.Clear();
             #endregion
             #region Setup game
-            Console.SetWindowSize(48, 25);
-            Console.SetBufferSize(48, 25);
+            Console.SetWindowSize(48, 30);
+            Console.SetBufferSize(48, 30);
             Levels.Setup();
             Piece.Setup();
             BagRandomizer.Setup();
@@ -38,13 +40,14 @@ namespace Game
             CurrentPiece.UpdatePiece();
             HoldPiece.Setup();
             Drawer.Setup();
+            CurrentPiece.Spawn();
             #endregion
             #region Run game
             frameTimer = new Timer(16);
             frameTimer.Elapsed += CurrentPiece.UpdatePiece;
+            frameTimer.Elapsed += CurrentPiece.ControlPiece;
             frameTimer.AutoReset = true;
             frameTimer.Enabled = true;
-            CurrentPiece.LockPiece(null,null);
             while (true)
             {
                 Drawer.DrawToConsole();
@@ -117,7 +120,6 @@ namespace Game
         }
         #endregion
     }
-    // Inactive, just stores data
     public static class Matrix
     {
         public static bool[][] state; // board state = state[x][y]
@@ -132,7 +134,6 @@ namespace Game
             }
         }
     }
-    // Stores data and logic for current piece and level
     public static class CurrentPiece
     {
         public static bool[][] state; // board state = state[x][y]
@@ -151,7 +152,8 @@ namespace Game
             }
             set
             {
-                _rotState = value % 4;
+                // modulo operation that supports negative numbers
+                _rotState = (value % 4 + 4) % 4;
             }
         }
         public static bool landed
@@ -181,7 +183,6 @@ namespace Game
         private static int leftDasTimer;
         private static int rightDasTimer;
         public static Levels level;
-        private static Timer gravTimer;
         public static int lockDelayTimer;
         public static int lines;
         public static int lockDelayResets;
@@ -197,6 +198,7 @@ namespace Game
         public static int score;
         public static int areTimer;
         public static int lineAreTimer;
+        public static double leftoverG;
         public static bool[] lined;
         public static int levelNum {
             get
@@ -210,6 +212,7 @@ namespace Game
         }
         public static void UpdatePiece()
         {
+            #region Lock Delay
             if (landed)
             {
                 lockDelayTimer++;
@@ -222,15 +225,23 @@ namespace Game
             {
                 lockDelayTimer = 0;
             }
-            if (level.g >= 1)
+            #endregion
+            #region Gravity
+            for (int i = 0; i < (int)Math.Floor(level.g); i++)
             {
-                for (int i = 0; i < (int)Math.Floor(level.g); i++)
-                {
-                    Fall(null, null);
-                }
+                Fall(null, null);
             }
-            if(lineAreTimer >= 0)
+            leftoverG += level.g - (int)Math.Floor(level.g);
+            if(leftoverG >= 1)
             {
+                Fall(null, null);
+                leftoverG -= 1;
+            }
+            #endregion
+            #region Line ARE and ARE, line clear
+            if (lineAreTimer >= 0)
+            {
+                UpdateGhost();
                 lineAreTimer++;
             }
             else if (areTimer >= 0)
@@ -239,13 +250,181 @@ namespace Game
             }
             if (lineAreTimer > level.lineAre)
             {
-                // TODO
-            }
+                int[] rowsLined = new int[4];
+                int firstUnused = 0;
+                // lines cleared == firstUnused + 1
+                for(int i = 0; i < 40; i++)
+                {
+                    if(lined[i])
+                    {
+                        rowsLined[firstUnused] = i;
+                        firstUnused++;
+                    }
+                }
+                for(int i = 0; i < firstUnused; i++)
+                {
+                    for(int y = 0; y < 40; y++)
+                    {
+                        if(y >= rowsLined[i])
+                        {
+                            for(int x = 0; x < 10; x++)
+                            {
+                                if(y == 39)
+                                {
+                                    Matrix.state[x][y] = false;
+                                }
+                                else
+                                {
+                                    Matrix.state[x][y] = Matrix.state[x][y + 1];
+                                }
+                            }
+                        }
+                    }
+                }
+                lineAreTimer = -1;
+                lined = new bool[40];
+            } // blocks above cleared line fall
+            #endregion
             if(areTimer > level.are)
             {
                 Spawn();
                 areTimer = -1;
             }
+        }
+        public static void ControlPiece(object o, ElapsedEventArgs _)
+        {
+            // Left
+            if (NativeKeyboard.IsKeyDown(Controls.left))
+            {
+                leftDasTimer++;
+                if (areTimer < 0)
+                {
+                    if (!Controls.prevFramePresses[0])
+                    {
+                        Left();
+                    }
+                    if (leftDasTimer > level.das)
+                    {
+                        if (level.arr == 0)
+                        {
+                            for (int i = 0; i < 9; i++)
+                            {
+                                Left();
+                            }
+                        }
+                        else
+                        {
+                            if (leftDasTimer > level.das + level.arr)
+                            {
+                                leftDasTimer = level.das;
+                                Left();
+                            }
+                            leftDasTimer++;
+                        }
+                    }
+                }
+            }
+            else { leftDasTimer = 0; }
+
+            // Right
+            if (NativeKeyboard.IsKeyDown(Controls.right))
+            {
+                rightDasTimer++;
+                if (!Controls.prevFramePresses[1])
+                {
+                    Right();
+                }
+                if (rightDasTimer > level.das)
+                {
+                    if (level.arr == 0)
+                    {
+                        for (int i = 0; i < 9; i++)
+                        {
+                            Right();
+                        }
+                    }
+                    else
+                    {
+                        if (rightDasTimer > level.das + level.arr)
+                        {
+                            rightDasTimer = level.das;
+                            Right();
+                        }
+                        rightDasTimer++;
+                    }
+                }
+            }
+            else { rightDasTimer = 0; }
+
+            // Hard drop
+            if (NativeKeyboard.IsKeyDown(Controls.hardDrop) && !Controls.prevFramePresses[2] && areTimer == -1)
+            {
+                LockPiece(null, null);
+            }
+
+            // Soft drop
+            if (NativeKeyboard.IsKeyDown(Controls.softDrop))
+            {
+                Fall(null, null);
+                score += 1;
+                while(!landed && Controls.useSonicDrop && areTimer == -1)
+                {
+                    Fall(null, null);
+                    score += 1;
+                }
+            }
+
+            // Clockwise
+            if(NativeKeyboard.IsKeyDown(Controls.rotCw) && !Controls.prevFramePresses[4] && areTimer == -1)
+            {
+                RotCW();
+            }
+
+            // Counterclockwise
+            if(NativeKeyboard.IsKeyDown(Controls.rotCcw) && !Controls.prevFramePresses[5] && areTimer == -1)
+            {
+                RotCCW();
+            }
+
+            // 180 rotation
+            if(NativeKeyboard.IsKeyDown(Controls.rot180) && !Controls.prevFramePresses[6])
+            {
+                Rot180();
+            }
+
+            // Hold
+            if(NativeKeyboard.IsKeyDown(Controls.hold) && !Controls.prevFramePresses[7] && areTimer < 0)
+            {
+                if (HoldPiece.current == 'N')
+                {
+                    HoldPiece.current = piece;
+                    state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40] };
+                    Spawn();
+                }
+                else if (HoldPiece.used == false)
+                {
+                    char heldPiece = HoldPiece.current;
+                    HoldPiece.used = true;
+                    state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40] };
+                    xoffset = 2;
+                    yoffset = 18;
+                    if (NativeKeyboard.IsKeyDown(Controls.rotCcw)) { rotState = 3; }
+                    else if (NativeKeyboard.IsKeyDown(Controls.rot180)) { rotState = 2; }
+                    else if (NativeKeyboard.IsKeyDown(Controls.rotCw)) { rotState = 1; }
+                    else { rotState = 0; }
+                    for (int x = 0; x < 5; x++)
+                    {
+                        for (int y = 0; y < 5; y++)
+                        {
+                            state[x + 2][-y + 23] = Piece.GetPiece(HoldPiece.current).piece[rotState][y][x];
+                        }
+                    }
+                    HoldPiece.current = piece;
+                    piece = heldPiece;
+                    UpdateGhost();
+                }
+            }
+            Controls.SaveFramePresses();
         }
         public static void Setup()
         {
@@ -275,19 +454,19 @@ namespace Game
             piecenum = 0;
             leftDasTimer = Controls.das;
             rightDasTimer = Controls.das;
-            Spawn();
             level = Levels.list[0];
-            gravTimer = new Timer(1 / level.g * 16.6666);
-            gravTimer.AutoReset = true;
-            gravTimer.Elapsed += Fall;
             score = 0;
+            leftoverG = 0d;
+            areTimer = -1;
+            lineAreTimer = -1;
+            Controls.Setup();
         }
         public static void NextPiece()
         {
             bool newBag = false;
             if (piecenum == 6)
             {
-                newBag = false;
+                newBag = true;
                 BagRandomizer.GetNew();
                 piecenum = 0;
             }
@@ -327,6 +506,7 @@ namespace Game
         }
         public static void LockPiece(object o, ElapsedEventArgs _)
         {
+            HoldPiece.used = false;
             while(!landed)
             {
                 Fall(null, null);
@@ -346,55 +526,60 @@ namespace Game
             int linesCleared = 0;
             for(int y = 0; y < 40; y++)
             {
-                for(int x = 0; Matrix.state[x][y] == true && x < 10; x++)
+                if(
+                    #region Check for line
+                    Matrix.state[0][y] && Matrix.state[1][y] && Matrix.state[2][y] && Matrix.state[3][y] && Matrix.state[4][y] && Matrix.state[5][y] && Matrix.state[6][y] && Matrix.state[7][y] && Matrix.state[8][y] && Matrix.state[9][y]
+                #endregion
+                    )
                 {
-                    if(x == 9)
+                    ClearLine(y);
+                    linesCleared++;
+                    lined[y] = true;
+                    for(int e = 0; e < 10; e++)
                     {
-                        ClearLine(y);
-                        linesCleared++;
-                        lined[y] = true;
-                        for(int e = 0; e < 10; e++)
-                        {
-                            Matrix.state[e][y] = false;
-                        }
+                        Matrix.state[e][y] = false;
                     }
                 }
             }
             switch (linesCleared)
             {
                 case 0:
+                    lineAreTimer = -1;
                     break;
                 case 1:
                     lines++;
                     score += (int)Math.Floor(lines / 10d) * 100;
+                    lineAreTimer = 0;
+                    level = Levels.list[(int)Math.Floor(lines / 10d)];
                     break;
                 case 2:
                     lines += 2;
                     score += (int)Math.Floor(lines / 10d) * 100;
+                    lineAreTimer = 0;
                     break;
                 case 3:
                     lines += 3;
                     score += (int)Math.Floor(lines / 10d) * 100;
+                    lineAreTimer = 0;
                     break;
                 case 4:
                     lines += 4;
                     score += (int)Math.Floor(lines / 10d) * 100;
+                    lineAreTimer = 0;
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException("5+ line clear!");
             }
-                throw new ArgumentOutOfRangeException("5+ line clear!");
-
+            areTimer = 0;
         }
         public static void Spawn()
         {
-            rotState = 0;
-            if (NativeKeyboard.IsKeyDown(Controls.rotCcw))
-            {
-                rotState = 3;
-            }
-            else if (NativeKeyboard.IsKeyDown(Controls.rot180))
-            {
-
-            }
+            xoffset = 2;
+            yoffset = 18;
+            if (NativeKeyboard.IsKeyDown(Controls.rotCcw)) { rotState = 3; }
+       else if (NativeKeyboard.IsKeyDown(Controls.rot180)) { rotState = 2; }
+       else if (NativeKeyboard.IsKeyDown(Controls.rotCw )) { rotState = 1; }
+       else                                                { rotState = 0; }
             for(int x = 0; x < 5; x++)
             {
                 for(int y = 0; y < 5; y++)
@@ -411,87 +596,308 @@ namespace Game
                     nextPieceSpawn[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum]).piece[0][y][x];
                 }
             }
+            lockDelayResets = 0;
         }
         public static void Left()
         {
-            UpdateGhost();
+            if(Array.IndexOf(state[0], true) == -1)
+            {
+                bool[][] shifted = new bool[10][]
+                    {
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                    };
+
+                for(int x = 0; x < 10; x++)
+                {
+                    for(int y = 0; y < 40; y++)
+                    {
+                        if(x == 9)
+                        {
+                            shifted[x][y] = false;
+                        }
+                        else
+                        {
+                            shifted[x][y] = state[x + 1][y];
+                        }
+                        if(shifted[x][y] && Matrix.state[x][y])
+                        {
+                            return;
+                        }
+                    }
+                }
+                state = shifted;
+                xoffset--;
+                if (landed)
+                {
+                    ResetLockDelay();
+                }
+                if(areTimer < 0)
+                {
+                    UpdateGhost();
+                }
+            }
         }
         public static void Right()
         {
-            UpdateGhost();
+            if (Array.IndexOf(state[9], true) == -1)
+            {
+                bool[][] shifted = new bool[10][]
+                    {
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                        new bool[40],
+                    };
+
+                for (int x = 0; x < 10; x++)
+                {
+                    for (int y = 0; y < 40; y++)
+                    {
+                        if (x == 0)
+                        {
+                            shifted[x][y] = false;
+                        }
+                        else
+                        {
+                            shifted[x][y] = state[x - 1][y];
+                        }
+                        if (shifted[x][y] && Matrix.state[x][y])
+                        {
+                            return;
+                        }
+                    }
+                }
+                state = shifted;
+                xoffset++;
+                if (landed)
+                {
+                    ResetLockDelay();
+                }
+                if(areTimer < 0)
+                {
+                    UpdateGhost();
+                }
+            }
         }
         public static void RotCW()
         {
-            UpdateGhost();
-            // TODO
+            bool[][] rotated = new bool[10][]
+            {
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+            };
+            bool totalFail = true;
+            bool failed = false;
+            Piece p = Piece.GetPiece(piece);
+            for(int i = 0; i < p.cwKicks.Length; i++)
+            {
+                for (int x = 0; x < 5; x++)
+                {
+                    for (int y = 0; y < 5; y++)
+                    {
+                        if (p.piece[(rotState + 1) % 4][-y + 4][x])
+                        {
+                            // Detect overlap with wall, floor, ceiling or other minos
+                            if (x + xoffset + p.cwKicks[rotState][i].x < 0 
+                            || x + xoffset + p.cwKicks[rotState][i].x > 9 
+                            || y + yoffset + p.cwKicks[rotState][i].y < 0 
+                            || y + yoffset + p.cwKicks[rotState][i].y > 40 
+                            || Matrix.state[x + xoffset + p.cwKicks[rotState][i].x][y + yoffset + p.cwKicks[rotState][i].y])
+                            {
+                                failed = true;
+                                break;
+                            }
+                            else
+                            {
+                                rotated[x + xoffset + p.cwKicks[rotState][i].x][y + yoffset + p.cwKicks[rotState][i].y] = true;
+                            }
+                        }
+                        if (failed) { break; }
+                    }
+                    if (failed) { break; }
+                }
+                if (!failed)
+                {
+                    totalFail = false;
+                    break;
+                }
+            }
+            if (!totalFail)
+            {
+                rotState++;
+                state = rotated;
+                UpdateGhost();
+                if (!landed)
+                {
+                    ResetLockDelay();
+                }
+            }
         }
         public static void RotCCW()
         {
-            UpdateGhost();
-            // TODO
+            bool[][] rotated = new bool[10][]
+            {
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+            };
+            bool totalFail = true;
+            bool failed = false;
+            Piece p = Piece.GetPiece(piece);
+            for (int i = 0; i < p.ccwKicks.Length; i++)
+            {
+                for (int x = 0; x < 5; x++)
+                {
+                    for (int y = 0; y < 5; y++)
+                    {
+                        if (p.piece[(rotState + 3) % 4][-y + 4][x])
+                        {
+                            // Detect overlap with wall, floor, ceiling or other minos
+                            if (x + xoffset + p.ccwKicks[rotState][i].x < 0 
+                                || x + xoffset + p.ccwKicks[rotState][i].x > 9 
+                                || y + yoffset + p.ccwKicks[rotState][i].y < 0 
+                                || y + yoffset + p.ccwKicks[rotState][i].y > 40 
+                                || Matrix.state[x + xoffset + p.ccwKicks[rotState][i].x][y + yoffset + p.ccwKicks[rotState][i].y])
+                            {
+                                failed = true;
+                                break;
+                            }
+                            else
+                            {
+                                rotated[x + xoffset + p.ccwKicks[rotState][i].x][y + yoffset + p.ccwKicks[rotState][i].y] = true;
+                            }
+                        }
+                        if (failed) { break; }
+                    }
+                    if (failed) { break; }
+                }
+                if (!failed)
+                {
+                    totalFail = false;
+                    break;
+                }
+            }
+            if (!totalFail)
+            {
+                rotState--;
+                state = rotated;
+                UpdateGhost();
+                if (!landed)
+                {
+                    ResetLockDelay();
+                }
+            }
         }
         public static void Rot180()
         {
-            UpdateGhost();
-            // TODO
-        }
-        public static void DasLeft(object o, ElapsedEventArgs _)
-        {
-            if(Controls.arr == 0)
+            bool[][] rotated = new bool[10][]
             {
-                Left();
-                Left();
-                Left();
-                Left();
-                Left();
-                Left();
-                Left();
-                Left();
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+                new bool[40],
+            };
+            bool totalFail = true;
+            bool failed = false;
+            Piece p = Piece.GetPiece(piece);
+            for (int i = 0; i < p.flipKicks.Length; i++)
+            {
+                for (int x = 0; x < 5; x++)
+                {
+                    for (int y = 0; y < 5; y++)
+                    {
+                        if (p.piece[(rotState + 3) % 4][-y + 4][x])
+                        {
+                            // Detect overlap with wall, floor, ceiling or other minos
+                            if (x + xoffset + p.flipKicks[rotState][i].x < 0
+                                || x + xoffset + p.flipKicks[rotState][i].x > 9
+                                || y + yoffset + p.flipKicks[rotState][i].y < 0
+                                || y + yoffset + p.flipKicks[rotState][i].y > 40
+                                || Matrix.state[x + xoffset + p.flipKicks[rotState][i].x][y + yoffset + p.flipKicks[rotState][i].y])
+                            {
+                                failed = true;
+                                break;
+                            }
+                            else
+                            {
+                                rotated[x + xoffset + p.flipKicks[rotState][i].x][y + yoffset + p.flipKicks[rotState][i].y] = true;
+                            }
+                        }
+                        if (failed) { break; }
+                    }
+                    if (failed) { break; }
+                }
+                if (!failed)
+                {
+                    totalFail = false;
+                    break;
+                }
             }
-            else
+            if (!totalFail)
             {
-                Left();
-                leftDasTimer = Controls.arr;
-            }
-        }
-        public static void DasRight(object o, ElapsedEventArgs _)
-        {
-            if (Controls.arr == 0)
-            {
-                Right();
-                Right();
-                Right();
-                Right();
-                Right();
-                Right();
-                Right();
-                Right();
-                Right();
-            }
-            else
-            {
-                Right();
-                rightDasTimer = Controls.arr;
+                rotState += 2;
+                state = rotated;
+                UpdateGhost();
+                if (!landed)
+                {
+                    ResetLockDelay();
+                }
             }
         }
         /// <summary>
         /// Get info of a future piece, up to 7 pieces
         /// </summary>
-        /// <param name="intoFuture">How many pieces into the future. 1 = next piece. Min = 1, Max = 7, inclusively.</param>
+        /// <param name="intoFuture">How many pieces into the future. 0 = next piece. Min = 0, Max = 7, inclusively.</param>
         /// <returns></returns>
-        public static bool[][] GetFuturePiece(int intoFuture)
+        public static Piece GetFuturePiece(int intoFuture)
         {
-            if(intoFuture < 1 || intoFuture > 7)
+            if(intoFuture < 0 || intoFuture > 7)
             {
-                throw new ArgumentOutOfRangeException(intoFuture < 1 ? $"Minimum value is 1, got {intoFuture}" : $"Maximum value is 7, got {intoFuture}");
+                throw new ArgumentOutOfRangeException(intoFuture < 0 ? $"Minimum value is 1, got {intoFuture}" : $"Maximum value is 7, got {intoFuture}");
             }
             if(piecenum + intoFuture > 6)
             {
-                return Piece.GetPiece(BagRandomizer.output[BagRandomizer.next][piecenum + intoFuture - 7]).piece[0];
+                return Piece.GetPiece(BagRandomizer.output[BagRandomizer.next][piecenum + intoFuture - 7]);
             }
             else
             {
-                return Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum + intoFuture]).piece[0];
+                return Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum + intoFuture]);
             }
         }
         public static void ResetLockDelay()
@@ -516,7 +922,8 @@ namespace Game
                     ghost[x][y] = state[x][y];
                 }
             }
-            while (!IsLanded(ghost))
+            int i = 0;
+            while (!IsLanded(ghost) && i < 40)
             {
                 for (int y = 0; y < 40; y++)
                 {
@@ -525,6 +932,7 @@ namespace Game
                         ghost[x][Math.Max(y - 1, 0)] = ghost[x][y];
                     }
                 }
+                i++;
             }
         }
         private static bool IsLanded(bool[][] _state)
@@ -551,17 +959,9 @@ namespace Game
         }
         public static void ClearLine(int y)
         {
-            if (level.g < 1)
-            {
-                gravTimer.Interval = 1 / level.g * 16.6666;
-            }
-            else
-            {
-                gravTimer.Enabled = false;
-            }
+            level = Levels.list[(int)Math.Floor(lines/10d)];
         }
     }
-    // Draws to window
     static class Drawer
     {
         private static string[] Picture
@@ -649,8 +1049,8 @@ namespace Game
   /*21*/         $"            |                    |\n" +
   /*22*/         $"            |                    |\n" +
   /*23*/         $"            |                    |\n"
-              // 0123456789012345678901234567890123
-              // 0         10        20        30
+              //   0123456789012345678901234567890123456
+              //   0         10        20        30
                 );
             Console.ForegroundColor = ConsoleColor.Red;
             for(int i = 0; i < 4; i++)
@@ -815,6 +1215,44 @@ namespace Game
                 }
                 DrawHoldPiece();
                 DrawNextPieces();
+                Console.SetCursorPosition(12, 24);
+                double lockDelayPercentage = CurrentPiece.lockDelayTimer / CurrentPiece.level.lockDelay;
+                int equals = (int)(lockDelayPercentage * 24);
+                for(int i = 0; i < 24; i++)
+                {
+                    if(i >= equals)
+                    {
+                        Console.Write("=");
+                    }
+                    else
+                    {
+                        Console.Write(" ");
+                    }
+                }
+                Console.SetCursorPosition(12, 25);
+                int ldr = 30 - CurrentPiece.lockDelayResets;
+                for(int i = 0; i < 15; i++)
+                {
+                    if(ldr >= 2)
+                    {
+                        Console.Write("″");
+                    }
+                    else if(ldr == 1)
+                    {
+                        Console.Write("'");
+                    }
+                    else
+                    {
+                        Console.Write(" ");
+                    }
+                    ldr -= 2;
+                }
+                Console.SetCursorPosition(0, 5);
+                Console.Write($"Lvl {CurrentPiece.levelNum}");
+                Console.SetCursorPosition(0, 6);
+                Console.Write($"{(int)(CurrentPiece.level.g * 100) / 100d}G {CurrentPiece.level.lockDelay}LD");
+                Console.SetCursorPosition(0, 7);
+                Console.Write($"{CurrentPiece.lines} lines");
             }
             else
             {
@@ -835,7 +1273,47 @@ namespace Game
         }
         private static void DrawNextPieces()
         {
-            // TODO
+            Console.SetCursorPosition(36, 2);
+            Console.Write(GetMinos(CurrentPiece.GetFuturePiece(0).piece[0][1]));
+
+            Console.SetCursorPosition(36, 3);
+            Console.Write(GetMinos(CurrentPiece.GetFuturePiece(0).piece[0][2]));
+
+            Console.SetCursorPosition(36, 5);
+            Console.Write(GetMinos(CurrentPiece.GetFuturePiece(1).piece[0][1]));
+
+            Console.SetCursorPosition(36, 6);
+            Console.Write(GetMinos(CurrentPiece.GetFuturePiece(1).piece[0][2]));
+
+            Console.SetCursorPosition(36, 8);
+            Console.Write(GetMinos(CurrentPiece.GetFuturePiece(2).piece[0][1]));
+
+            Console.SetCursorPosition(36, 9);
+            Console.Write(GetMinos(CurrentPiece.GetFuturePiece(2).piece[0][2]));
+
+            Console.SetCursorPosition(36, 11);
+            Console.Write(GetMinos(CurrentPiece.GetFuturePiece(3).piece[0][1]));
+
+            Console.SetCursorPosition(36, 12);
+            Console.Write(GetMinos(CurrentPiece.GetFuturePiece(3).piece[0][2]));
+
+            Console.SetCursorPosition(36, 14);
+            Console.Write(GetMinos(CurrentPiece.GetFuturePiece(4).piece[0][1]));
+
+            Console.SetCursorPosition(36, 15);
+            Console.Write(GetMinos(CurrentPiece.GetFuturePiece(4).piece[0][2]));
+
+            Console.SetCursorPosition(36, 17);
+            Console.Write(GetMinos(CurrentPiece.GetFuturePiece(5).piece[0][1]));
+
+            Console.SetCursorPosition(36, 18);
+            Console.Write(GetMinos(CurrentPiece.GetFuturePiece(5).piece[0][2]));
+
+            Console.SetCursorPosition(36, 20);
+            Console.Write(GetMinos(CurrentPiece.GetFuturePiece(6).piece[0][1]));
+
+            Console.SetCursorPosition(36, 21);
+            Console.Write(GetMinos(CurrentPiece.GetFuturePiece(6).piece[0][2]));
         }
         private static string GetMinos(bool[] minoTypes)
         {
@@ -855,7 +1333,7 @@ namespace Game
         /// <returns>Index of output that is supposed to be the current one</returns>
         public static int GetNew()
         {
-            output[next] = GetSeq();
+            output[current] = GetSeq();
             if(current == 0)
             {
                 next = 0;
@@ -924,8 +1402,17 @@ namespace Game
             used = false;
         }
     }
-    class Piece
+    public class Piece
     {
+        //            WARNING
+
+        //    Corner detection systems
+        //          incomplete.
+
+        #region Data
+        /// <summary>
+        /// The state for the piece. [rot state], [y], [x]
+        /// </summary>
         public bool[][][] piece = new bool[4][][]
         {
             new bool[5][] { new bool[5], new bool[5], new bool[5], new bool[5], new bool[5] }, // init rot
@@ -936,17 +1423,20 @@ namespace Game
         /// <summary>
         /// Corners to detect for spin detection. 0, 0 is bottom left.
         /// </summary>
-        public Vector2D[] cornersToCheck; // Check corners for spin
+        public Vector2D[] primaryCorners; // Check corners for spin
+        public Vector2D[] secondaryCorners;
         public Vector2D[][] cwKicks; // Clockwise kicks
         public Vector2D[][] ccwKicks; // Counterclockwise kicks
         public Vector2D[][] flipKicks; // 180 degree kicks
-        public Piece(bool[][][] piece, Vector2D[][] cwKicks, Vector2D[][] ccwKicks, Vector2D[][] flipKicks, Vector2D[] cornerDetection)
+        #endregion
+        public Piece(bool[][][] piece, Vector2D[][] cwKicks, Vector2D[][] ccwKicks, Vector2D[][] flipKicks, Vector2D[] primaryCorners, Vector2D[] secondaryCorners)
         {
             this.piece = piece;
             this.cwKicks = cwKicks;
             this.ccwKicks = ccwKicks;
             this.flipKicks = flipKicks;
-            this.cornersToCheck = cornerDetection;
+            this.primaryCorners = primaryCorners;
+            this.secondaryCorners = secondaryCorners;
         }
         #region Piece List
         public static Piece Z;
@@ -1019,12 +1509,13 @@ namespace Game
                 }
                 #endregion
                 #region Corner detection
-
+                ,null, null // TODO
                 #endregion
                 );
             #endregion
             #region L
             L = new Piece(
+                #region States
                 new bool[4][][]{
                     new bool[5][] {
                         new bool[5] { false, false, false, false, false }, // 
@@ -1054,7 +1545,10 @@ namespace Game
                         new bool[5] { false, false, true,  false, false }, // ##[]##
                         new bool[5] { false, false, false, false, false }, // 
                         },
+
                 },
+            #endregion
+                #region Kicks
                 new Vector2D[4][]
                 {
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
@@ -1076,10 +1570,15 @@ namespace Game
                     new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1,  1), new Vector2D(-2,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1,  1), new Vector2D( 2,  1), new Vector2D( 0,  1), new Vector2D(-3,  0), new Vector2D( 3,  0) },  // 2 => 0
                     new Vector2D[13] { new Vector2D(0, 0), new Vector2D(-1,  0), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1, -2), new Vector2D( 0, -1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1,  2), new Vector2D(-1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // L => R
                 }
+                #endregion
+                #region Corner detection
+                , null, null // TODO
+                #endregion
                 );
             #endregion
             #region O
             O = new Piece(
+                #region States
                 new bool[4][][]{
                     new bool[5][] {
                         new bool[5] { false, false, false, false, false }, // 
@@ -1110,6 +1609,8 @@ namespace Game
                         new bool[5] { false, false, false, false, false }, // 
                         },
                 },
+            #endregion
+                #region Kicks
                 new Vector2D[4][]
                 {
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
@@ -1131,10 +1632,15 @@ namespace Game
                     new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1,  1), new Vector2D(-2,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1,  1), new Vector2D( 2,  1), new Vector2D( 0,  1), new Vector2D(-3,  0), new Vector2D( 3,  0) },  // 2 => 0
                     new Vector2D[13] { new Vector2D(0, 0), new Vector2D(-1,  0), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1, -2), new Vector2D( 0, -1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1,  2), new Vector2D(-1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // L => R
                 }
+                #endregion
+                #region Corner detection
+                , null, null // TODO
+                #endregion
                 );
             #endregion
             #region S
             S = new Piece(
+                #region States
                 new bool[4][][]{
                     new bool[5][] {
                         new bool[5] { false, false, false, false, false }, //
@@ -1165,6 +1671,8 @@ namespace Game
                         new bool[5] { false, false, false, false, false }, //
                         },
                 },
+            #endregion
+                #region Kicks
                 new Vector2D[4][]
                 {
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
@@ -1186,10 +1694,15 @@ namespace Game
                     new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1,  1), new Vector2D(-2,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1,  1), new Vector2D( 2,  1), new Vector2D( 0,  1), new Vector2D(-3,  0), new Vector2D( 3,  0) },  // 2 => 0
                     new Vector2D[13] { new Vector2D(0, 0), new Vector2D(-1,  0), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1, -2), new Vector2D( 0, -1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1,  2), new Vector2D(-1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // L => R
                 }
+                #endregion
+                #region Corner detection
+                , null, null // TODO
+                #endregion
                 );
             #endregion
             #region I
             I = new Piece(
+                #region States
                 new bool[4][][]{
                     new bool[5][] {
                         new bool[5] { false, false, false, false, false }, // ##########
@@ -1220,6 +1733,8 @@ namespace Game
                         new bool[5] { false, false, true,  false, false }, // ####[]####
                         },
                 },
+            #endregion
+                #region Kicks
                 new Vector2D[4][]
                 {
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-2, 0), new Vector2D( 1, 0), new Vector2D(-2,-1), new Vector2D( 1, 2) }, // 0 => R
@@ -1241,10 +1756,15 @@ namespace Game
                     new Vector2D[6] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 2, 0), new Vector2D(-1, 0), new Vector2D(-2, 0), new Vector2D( 0, 1) }, // 2 => 0
                     new Vector2D[6] { new Vector2D(0, 0), new Vector2D( 0,-1), new Vector2D( 0,-2), new Vector2D( 0, 1), new Vector2D( 0, 2), new Vector2D( 1, 0) }, // L => R
                 }
+                #endregion
+                #region Corner detection
+                , null, null // TODO
+                #endregion
                 );
             #endregion
             #region J
             J = new Piece(
+                #region States
                 new bool[4][][]{
                     new bool[5][] {
                         new bool[5] { false, false, false, false, false }, //
@@ -1275,6 +1795,8 @@ namespace Game
                         new bool[5] { false, false, false, false, false }, // 
                         },
                 },
+            #endregion
+                #region Kicks
                 new Vector2D[4][]
                 {
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
@@ -1296,10 +1818,15 @@ namespace Game
                     new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1,  1), new Vector2D(-2,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1,  1), new Vector2D( 2,  1), new Vector2D( 0,  1), new Vector2D(-3,  0), new Vector2D( 3,  0) },  // 2 => 0
                     new Vector2D[13] { new Vector2D(0, 0), new Vector2D(-1,  0), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1, -2), new Vector2D( 0, -1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1,  2), new Vector2D(-1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // L => R
                 }
+                #endregion
+                #region Corner detection
+                , null, null // TODO
+                #endregion
                 );
             #endregion
             #region T
             T = new Piece(
+                #region States
                 new bool[4][][]{
                     new bool[5][] {
                         new bool[5] { false, false, false, false, false }, //
@@ -1330,6 +1857,8 @@ namespace Game
                         new bool[5] { false, false, false, false, false }, //
                         },
                 },
+            #endregion
+                #region Kicks
                 new Vector2D[4][]
                 {
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
@@ -1351,6 +1880,10 @@ namespace Game
                     new Vector2D[13] { new Vector2D(0, 0), new Vector2D( 0, -1), new Vector2D(-1,  0), new Vector2D(-2,  0), new Vector2D(-1,  1), new Vector2D(-2,  1), new Vector2D( 1,  0), new Vector2D( 2,  0), new Vector2D( 1,  1), new Vector2D( 2,  1), new Vector2D( 0,  1), new Vector2D(-3,  0), new Vector2D( 3,  0) },  // 2 => 0
                     new Vector2D[13] { new Vector2D(0, 0), new Vector2D(-1,  0), new Vector2D( 0,  1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1, -2), new Vector2D( 0, -1), new Vector2D( 0,  2), new Vector2D( 1,  1), new Vector2D( 1,  2), new Vector2D(-1,  0), new Vector2D( 0,  3), new Vector2D( 0,  3) },  // L => R
                 }
+                #endregion
+                #region Corner detection
+                , null, null // TODO
+                #endregion
                 );
             #endregion
             #region None
@@ -1405,7 +1938,9 @@ namespace Game
                     new Vector2D[1] { new Vector2D(0, 0) },
                     new Vector2D[1] { new Vector2D(0, 0) },
                     new Vector2D[1] { new Vector2D(0, 0) },
-                }
+                },
+                new Vector2D[1] { new Vector2D(0, 0) },
+                new Vector2D[1] { new Vector2D(0, 0) }
                 );
             #endregion
             #endregion
@@ -1467,8 +2002,8 @@ namespace Game
             {
                 if(i < 20)
                 {
-                    // Gravity = 16.666ms / (0.8 - ( Level * 0.007 ) ^ Level
-                    list[i] = new Levels(Math.Pow(16.666d / (0.8 - (i * 0.007)), i), 30, -1, 10, 20, false, true, false, 20, 15);
+                    // Gravity = 16.666ms / (0.8 - ( Level * 0.007 ) ^ Level)
+                    list[i] = new Levels(0.166 * (1 / Math.Pow(0.8 - (i * 0.007), i)), 30, -1, 10, 20, false, true, false, 20, 15);
                 } // Actual Gravity Increase
                 else if(i < 26)
                 {                     // G    lockdelay  invis        are                   line are
@@ -1526,19 +2061,35 @@ namespace Game
         public readonly static int retry = 82;
         public readonly static int pause = 27;
         #endregion
+        /// <summary>
+        /// Previous frame presses. Index (0 - 7): L, R, HD, SD, CW, CCW, 180, Hold
+        /// </summary>
+        public static bool[] prevFramePresses;
+        public static void Setup()
+        {
+            prevFramePresses = new bool[8];
+        }
+        public static void SaveFramePresses()
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                prevFramePresses[i] = NativeKeyboard.IsKeyDown(buttons[i]);
+            }
+        }
         public static void LoadControls()
         {
-            if (!File.Exists("%appdata%\\Retroblocks\\config.txt"))
+            string dataLoc = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            if (!File.Exists(dataLoc + "\\Retroblocks\\config.txt"))
             {
                 ResetControls();
             }
             else
             {
-               
+
+                StreamReader reader = new StreamReader(dataLoc + "\\Retroblocks\\config.txt");
                 try
                 {
                     #region Get controls
-                    StreamReader reader = new StreamReader("%appdata%\\Retroblocks\\config.txt");
                     left = Convert.ToInt32(reader.ReadLine());
                     right = Convert.ToInt32(reader.ReadLine());
                     hardDrop = Convert.ToInt32(reader.ReadLine());
@@ -1550,7 +2101,7 @@ namespace Game
                     das = Convert.ToInt32(reader.ReadLine());
                     arr = Convert.ToInt32(reader.ReadLine());
                     useSonicDrop = Convert.ToBoolean(reader.ReadLine());
-
+                    reader.Close();
                     // Checks for duplicates
                     if (buttons.GroupBy(x => x).Any(g => g.Count() > 1))
                     {
@@ -1560,6 +2111,7 @@ namespace Game
                 }
                 catch
                 {
+                    reader.Close();
                     ResetControls();
                 }
             }
@@ -1585,7 +2137,7 @@ namespace Game
             #endregion
             #region Save
             StreamWriter writer = new StreamWriter(dataLoc + "\\Retroblocks\\config.txt");
-            writer.Write($"{left}\n{right}\n{hardDrop}\n{softDrop}\n{rotCw}\n{rotCcw}\n{rot180}\n{das}\n{arr}");
+            writer.Write($"{left}\n{right}\n{hardDrop}\n{softDrop}\n{rotCw}\n{rotCcw}\n{rot180}\n{das}\n{arr}\n{useSonicDrop}");
             writer.Close();
             #endregion
         }
@@ -1734,7 +2286,7 @@ public static class HighScores
         SaveScores();
     }
 }
-class Vector2D
+public class Vector2D
 {
     public int x;
     public int y;
