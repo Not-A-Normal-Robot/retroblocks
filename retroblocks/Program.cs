@@ -37,14 +37,18 @@ namespace Game
             BagRandomizer.Setup();
             Matrix.Setup();
             CurrentPiece.Setup();
-            CurrentPiece.UpdatePiece();
+            CurrentPiece.UpdateTimers();
+            CurrentPiece.UpdateGravity();
+            CurrentPiece.UpdateLines();
             HoldPiece.Setup();
             Drawer.Setup();
             CurrentPiece.Spawn();
             #endregion
             #region Run game
             frameTimer = new Timer(16);
-            frameTimer.Elapsed += CurrentPiece.UpdatePiece;
+            frameTimer.Elapsed += CurrentPiece.UpdateTimers;
+            frameTimer.Elapsed += CurrentPiece.UpdateGravity;
+            frameTimer.Elapsed += CurrentPiece.UpdateLines;
             frameTimer.Elapsed += CurrentPiece.ControlPiece;
             frameTimer.AutoReset = true;
             frameTimer.Enabled = true;
@@ -206,13 +210,30 @@ namespace Game
                 return (int)Math.Floor(lines / 10d);
             }
         }
-        public static void UpdatePiece(object o, ElapsedEventArgs _)
+        public static void UpdateTimers(object o, ElapsedEventArgs _)
         {
-            UpdatePiece();
+            UpdateTimers();
         }
-        public static void UpdatePiece()
+        public static void UpdateGravity(object o, ElapsedEventArgs _)
         {
-            #region Lock Delay
+            UpdateGravity();
+        }
+        public static void UpdateLines(object o, ElapsedEventArgs _)
+        {
+            UpdateLines();
+        }
+        public static void UpdateTimers()
+        {
+            if (lineAreTimer >= 0)
+            {
+                UpdateGhost();
+                lineAreTimer++;
+            }
+            else if (areTimer >= 0)
+            {
+                areTimer++;
+            }
+
             if (landed)
             {
                 lockDelayTimer++;
@@ -225,51 +246,49 @@ namespace Game
             {
                 lockDelayTimer = 0;
             }
-            #endregion
-            #region Gravity
+            if (areTimer > level.are)
+            {
+                Spawn();
+                areTimer = -1;
+            }
+        }
+        public static void UpdateGravity()
+        {
             for (int i = 0; i < (int)Math.Floor(level.g); i++)
             {
                 Fall(null, null);
             }
             leftoverG += level.g - (int)Math.Floor(level.g);
-            if(leftoverG >= 1)
+            if (leftoverG >= 1)
             {
                 Fall(null, null);
                 leftoverG -= 1;
             }
-            #endregion
-            #region Line ARE and ARE, line clear
-            if (lineAreTimer >= 0)
-            {
-                UpdateGhost();
-                lineAreTimer++;
-            }
-            else if (areTimer >= 0)
-            {
-                areTimer++;
-            }
+        }
+        public static void UpdateLines()
+        {
             if (lineAreTimer > level.lineAre)
             {
                 int[] rowsLined = new int[4];
                 int firstUnused = 0;
                 // lines cleared == firstUnused + 1
-                for(int i = 0; i < 40; i++)
+                for (int i = 0; i < 40; i++)
                 {
-                    if(lined[i])
+                    if (lined[i])
                     {
                         rowsLined[firstUnused] = i;
                         firstUnused++;
                     }
                 }
-                for(int i = 0; i < firstUnused; i++)
+                for (int i = 0; i < firstUnused; i++)
                 {
-                    for(int y = 0; y < 40; y++)
+                    for (int y = 0; y < 40; y++)
                     {
-                        if(y >= rowsLined[i])
+                        if (y >= rowsLined[i])
                         {
-                            for(int x = 0; x < 10; x++)
+                            for (int x = 0; x < 10; x++)
                             {
-                                if(y == 39)
+                                if (y == 39)
                                 {
                                     Matrix.state[x][y] = false;
                                 }
@@ -284,12 +303,7 @@ namespace Game
                 lineAreTimer = -1;
                 lined = new bool[40];
             } // blocks above cleared line fall
-            #endregion
-            if(areTimer > level.are)
-            {
-                Spawn();
-                areTimer = -1;
-            }
+
         }
         public static void ControlPiece(object o, ElapsedEventArgs _)
         {
@@ -395,34 +409,7 @@ namespace Game
             // Hold
             if(NativeKeyboard.IsKeyDown(Controls.hold) && !Controls.prevFramePresses[7] && areTimer < 0)
             {
-                if (HoldPiece.current == 'N')
-                {
-                    HoldPiece.current = piece;
-                    state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40] };
-                    Spawn();
-                }
-                else if (HoldPiece.used == false)
-                {
-                    char heldPiece = HoldPiece.current;
-                    HoldPiece.used = true;
-                    state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40] };
-                    xoffset = 2;
-                    yoffset = 18;
-                    if (NativeKeyboard.IsKeyDown(Controls.rotCcw)) { rotState = 3; }
-                    else if (NativeKeyboard.IsKeyDown(Controls.rot180)) { rotState = 2; }
-                    else if (NativeKeyboard.IsKeyDown(Controls.rotCw)) { rotState = 1; }
-                    else { rotState = 0; }
-                    for (int x = 0; x < 5; x++)
-                    {
-                        for (int y = 0; y < 5; y++)
-                        {
-                            state[x + 2][-y + 23] = Piece.GetPiece(HoldPiece.current).piece[rotState][y][x];
-                        }
-                    }
-                    HoldPiece.current = piece;
-                    piece = heldPiece;
-                    UpdateGhost();
-                }
+                Hold();
             }
             Controls.SaveFramePresses();
         }
@@ -596,6 +583,7 @@ namespace Game
                     nextPieceSpawn[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum]).piece[0][y][x];
                 }
             }
+            if(NativeKeyboard.IsKeyDown(Controls.hold)) { Hold(); }
             lockDelayResets = 0;
         }
         public static void Left()
@@ -712,6 +700,7 @@ namespace Game
             bool totalFail = true;
             bool failed = false;
             Piece p = Piece.GetPiece(piece);
+            bool[][] m = Matrix.state;
             for(int i = 0; i < p.cwKicks.Length; i++)
             {
                 for (int x = 0; x < 5; x++)
@@ -725,7 +714,7 @@ namespace Game
                             || x + xoffset + p.cwKicks[rotState][i].x > 9 
                             || y + yoffset + p.cwKicks[rotState][i].y < 0 
                             || y + yoffset + p.cwKicks[rotState][i].y > 40 
-                            || Matrix.state[x + xoffset + p.cwKicks[rotState][i].x][y + yoffset + p.cwKicks[rotState][i].y])
+                            || m[x + xoffset + p.cwKicks[rotState][i].x][y + yoffset + p.cwKicks[rotState][i].y])
                             {
                                 failed = true;
                                 break;
@@ -743,6 +732,11 @@ namespace Game
                 {
                     totalFail = false;
                     break;
+                }
+                else
+                {
+                    failed = false;
+                    rotated = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40] };
                 }
             }
             if (!totalFail)
@@ -774,6 +768,7 @@ namespace Game
             bool totalFail = true;
             bool failed = false;
             Piece p = Piece.GetPiece(piece);
+            bool[][] m = Matrix.state;
             for (int i = 0; i < p.ccwKicks.Length; i++)
             {
                 for (int x = 0; x < 5; x++)
@@ -787,7 +782,7 @@ namespace Game
                                 || x + xoffset + p.ccwKicks[rotState][i].x > 9 
                                 || y + yoffset + p.ccwKicks[rotState][i].y < 0 
                                 || y + yoffset + p.ccwKicks[rotState][i].y > 40 
-                                || Matrix.state[x + xoffset + p.ccwKicks[rotState][i].x][y + yoffset + p.ccwKicks[rotState][i].y])
+                                || m[x + xoffset + p.ccwKicks[rotState][i].x][y + yoffset + p.ccwKicks[rotState][i].y])
                             {
                                 failed = true;
                                 break;
@@ -805,6 +800,11 @@ namespace Game
                 {
                     totalFail = false;
                     break;
+                }
+                else
+                {
+                    failed = false;
+                    rotated = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40] };
                 }
             }
             if (!totalFail)
@@ -836,20 +836,21 @@ namespace Game
             bool totalFail = true;
             bool failed = false;
             Piece p = Piece.GetPiece(piece);
+            bool[][] m = Matrix.state;
             for (int i = 0; i < p.flipKicks.Length; i++)
             {
                 for (int x = 0; x < 5; x++)
                 {
                     for (int y = 0; y < 5; y++)
                     {
-                        if (p.piece[(rotState + 3) % 4][-y + 4][x])
+                        if (p.piece[(rotState + 2) % 4][-y + 4][x])
                         {
                             // Detect overlap with wall, floor, ceiling or other minos
                             if (x + xoffset + p.flipKicks[rotState][i].x < 0
                                 || x + xoffset + p.flipKicks[rotState][i].x > 9
                                 || y + yoffset + p.flipKicks[rotState][i].y < 0
                                 || y + yoffset + p.flipKicks[rotState][i].y > 40
-                                || Matrix.state[x + xoffset + p.flipKicks[rotState][i].x][y + yoffset + p.flipKicks[rotState][i].y])
+                                || m[x + xoffset + p.flipKicks[rotState][i].x][y + yoffset + p.flipKicks[rotState][i].y])
                             {
                                 failed = true;
                                 break;
@@ -868,6 +869,11 @@ namespace Game
                     totalFail = false;
                     break;
                 }
+                else
+                {
+                    failed = false;
+                    rotated = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40] };
+                }
             }
             if (!totalFail)
             {
@@ -878,6 +884,38 @@ namespace Game
                 {
                     ResetLockDelay();
                 }
+            }
+        }
+        public static void Hold()
+        {
+
+            if (HoldPiece.current == 'N')
+            {
+                HoldPiece.current = piece;
+                state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40] };
+                Spawn();
+            }
+            else if (HoldPiece.used == false)
+            {
+                char heldPiece = HoldPiece.current;
+                HoldPiece.used = true;
+                state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40] };
+                xoffset = 2;
+                yoffset = 18;
+                if (NativeKeyboard.IsKeyDown(Controls.rotCcw)) { rotState = 3; }
+                else if (NativeKeyboard.IsKeyDown(Controls.rot180)) { rotState = 2; }
+                else if (NativeKeyboard.IsKeyDown(Controls.rotCw)) { rotState = 1; }
+                else { rotState = 0; }
+                for (int x = 0; x < 5; x++)
+                {
+                    for (int y = 0; y < 5; y++)
+                    {
+                        state[x + 2][-y + 23] = Piece.GetPiece(HoldPiece.current).piece[rotState][y][x];
+                    }
+                }
+                HoldPiece.current = piece;
+                piece = heldPiece;
+                UpdateGhost();
             }
         }
         /// <summary>
@@ -2002,8 +2040,7 @@ namespace Game
             {
                 if(i < 20)
                 {
-                    // Gravity = 16.666ms / (0.8 - ( Level * 0.007 ) ^ Level)
-                    list[i] = new Levels(0.166 * (1 / Math.Pow(0.8 - (i * 0.007), i)), 30, -1, 10, 20, false, true, false, 20, 15);
+                    list[i] = new Levels(0.001 * (1 / Math.Pow(0.8 - (i * 0.007), i)), 30, -1, 10, 20, false, true, false, 20, 15);
                 } // Actual Gravity Increase
                 else if(i < 26)
                 {                     // G    lockdelay  invis        are                   line are
