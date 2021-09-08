@@ -294,7 +294,7 @@ namespace Game
                                 }
                                 else
                                 {
-                                    Matrix.state[x][y] = Matrix.state[x][y + 1];
+                                    Matrix.state[x][y - i] = Matrix.state[x][y + 1 - i];
                                 }
                             }
                         }
@@ -1291,6 +1291,8 @@ namespace Game
                 Console.Write($"{(int)(CurrentPiece.level.g * 100) / 100d}G {CurrentPiece.level.lockDelay}LD");
                 Console.SetCursorPosition(0, 7);
                 Console.Write($"{CurrentPiece.lines} lines");
+                Console.SetCursorPosition(0, 8);
+                Console.Write($"Piece: {CurrentPiece.piece}");
             }
             else
             {
