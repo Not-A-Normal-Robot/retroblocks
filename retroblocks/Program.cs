@@ -12,7 +12,11 @@ namespace Game
     {
         public static bool paused = false;
         private static Timer frameTimer;
+        private static Timer secondTimer;
         public static string mode;
+        public static int tps { get; private set; }
+        public static int fps { get; private set; }
+        private static int framesThisSecond;
         static void Main()
         {
             #region Setup console
@@ -22,12 +26,15 @@ namespace Game
             Console.CursorVisible = false;
             Console.ForegroundColor = ConsoleColor.Green;
             Console.SetWindowSize(50, 30);
-            Console.SetBufferSize(50, 30);
+            Console.SetBufferSize(50, 31);
             DisableResize();
             #endregion
             #region Main Menu
             Menu.Main.Start();
             Console.Clear();
+            tps = 0;
+            fps = 0;
+            framesThisSecond = 0;
             #endregion
             #region Setup game
             Console.SetWindowSize(48, 30);
@@ -49,15 +56,28 @@ namespace Game
             frameTimer.Elapsed += CurrentPiece.UpdateTimers;
             frameTimer.Elapsed += CurrentPiece.UpdateGravity;
             frameTimer.Elapsed += CurrentPiece.UpdateLines;
-            frameTimer.Elapsed += CurrentPiece.ControlPiece;
+            frameTimer.Elapsed += CurrentPiece.MovePiece;
+            frameTimer.Elapsed += CurrentPiece.SpinPiece;
             frameTimer.AutoReset = true;
             frameTimer.Enabled = true;
+            secondTimer = new Timer(1000);
+            secondTimer.Elapsed += UpdateCounters;
+            secondTimer.AutoReset = true;
+            secondTimer.Enabled = true;
             while (true)
             {
                 Drawer.DrawToConsole();
+                framesThisSecond++;
                 Console.CursorVisible = false;
             }
             #endregion
+        }
+        static void UpdateCounters(object o, ElapsedEventArgs _)
+        {
+            tps = CurrentPiece.ticksThisSecond;
+            CurrentPiece.ticksThisSecond = 0;
+            fps = framesThisSecond;
+            framesThisSecond = 0;
         }
         #region Disable Selecting Text
         const uint ENABLE_QUICK_EDIT = 0x0040;
@@ -204,6 +224,7 @@ namespace Game
         public static int lineAreTimer;
         public static double leftoverG;
         public static bool[] lined;
+        public static int ticksThisSecond;
         public static int levelNum {
             get
             {
@@ -305,7 +326,7 @@ namespace Game
             } // blocks above cleared line fall
 
         }
-        public static void ControlPiece(object o, ElapsedEventArgs _)
+        public static void MovePiece(object o, ElapsedEventArgs _)
         {
             // Left
             if (NativeKeyboard.IsKeyDown(Controls.left))
@@ -388,30 +409,35 @@ namespace Game
                 }
             }
 
+            Controls.SaveFramePresses1();
+        }
+        public static void SpinPiece(object o, ElapsedEventArgs _)
+        {
             // Clockwise
-            if(NativeKeyboard.IsKeyDown(Controls.rotCw) && !Controls.prevFramePresses[4] && areTimer == -1)
+            if (NativeKeyboard.IsKeyDown(Controls.rotCw) && !Controls.prevFramePresses[4] && areTimer == -1)
             {
                 RotCW();
             }
 
             // Counterclockwise
-            if(NativeKeyboard.IsKeyDown(Controls.rotCcw) && !Controls.prevFramePresses[5] && areTimer == -1)
+            if (NativeKeyboard.IsKeyDown(Controls.rotCcw) && !Controls.prevFramePresses[5] && areTimer == -1)
             {
                 RotCCW();
             }
 
             // 180 rotation
-            if(NativeKeyboard.IsKeyDown(Controls.rot180) && !Controls.prevFramePresses[6])
+            if (NativeKeyboard.IsKeyDown(Controls.rot180) && !Controls.prevFramePresses[6])
             {
                 Rot180();
             }
 
             // Hold
-            if(NativeKeyboard.IsKeyDown(Controls.hold) && !Controls.prevFramePresses[7] && areTimer < 0)
+            if (NativeKeyboard.IsKeyDown(Controls.hold) && !Controls.prevFramePresses[7] && areTimer < 0)
             {
                 Hold();
             }
-            Controls.SaveFramePresses();
+
+            Controls.SaveFramePresses2();
         }
         public static void Setup()
         {
@@ -446,18 +472,19 @@ namespace Game
             leftoverG = 0d;
             areTimer = -1;
             lineAreTimer = -1;
+            ticksThisSecond = 0;
             Controls.Setup();
         }
         public static void NextPiece()
         {
             bool newBag = false;
+            piece = BagRandomizer.output[BagRandomizer.current][piecenum];
             if (piecenum == 6)
             {
                 newBag = true;
                 BagRandomizer.GetNew();
                 piecenum = 0;
             }
-            piece = BagRandomizer.output[BagRandomizer.current][piecenum];
             if (!newBag)
             {
                 piecenum++;
@@ -585,6 +612,8 @@ namespace Game
             }
             if(NativeKeyboard.IsKeyDown(Controls.hold)) { Hold(); }
             lockDelayResets = 0;
+
+            if (NativeKeyboard.IsKeyDown(Controls.hardDrop) && !Controls.prevFramePresses[2]) { LockPiece(null, null); }
         }
         public static void Left()
         {
@@ -744,7 +773,7 @@ namespace Game
                 rotState++;
                 state = rotated;
                 UpdateGhost();
-                if (!landed)
+                if (landed)
                 {
                     ResetLockDelay();
                 }
@@ -812,7 +841,7 @@ namespace Game
                 rotState--;
                 state = rotated;
                 UpdateGhost();
-                if (!landed)
+                if (landed)
                 {
                     ResetLockDelay();
                 }
@@ -880,7 +909,7 @@ namespace Game
                 rotState += 2;
                 state = rotated;
                 UpdateGhost();
-                if (!landed)
+                if (landed)
                 {
                     ResetLockDelay();
                 }
@@ -893,7 +922,23 @@ namespace Game
             {
                 HoldPiece.current = piece;
                 state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40] };
-                Spawn();
+
+                xoffset = 2;
+                yoffset = 18;
+                if (NativeKeyboard.IsKeyDown(Controls.rotCcw)) { rotState = 3; }
+                else if (NativeKeyboard.IsKeyDown(Controls.rot180)) { rotState = 2; }
+                else if (NativeKeyboard.IsKeyDown(Controls.rotCw)) { rotState = 1; }
+                else { rotState = 0; }
+                for (int x = 0; x < 5; x++)
+                {
+                    for (int y = 0; y < 5; y++)
+                    {
+                        state[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum]).piece[rotState][y][x];
+                    }
+                }
+                NextPiece();
+                UpdateGhost();
+                if (NativeKeyboard.IsKeyDown(Controls.hardDrop) && !Controls.prevFramePresses[2]) { LockPiece(null, null); }
             }
             else if (HoldPiece.used == false)
             {
@@ -916,6 +961,8 @@ namespace Game
                 HoldPiece.current = piece;
                 piece = heldPiece;
                 UpdateGhost();
+
+                if (NativeKeyboard.IsKeyDown(Controls.hardDrop) && !Controls.prevFramePresses[2]) { LockPiece(null, null); }
             }
         }
         /// <summary>
@@ -1254,17 +1301,17 @@ namespace Game
                 DrawHoldPiece();
                 DrawNextPieces();
                 Console.SetCursorPosition(12, 24);
-                double lockDelayPercentage = CurrentPiece.lockDelayTimer / CurrentPiece.level.lockDelay;
-                int equals = (int)(lockDelayPercentage * 24);
-                for(int i = 0; i < 24; i++)
+                double lockDelayPercentage = CurrentPiece.lockDelayTimer / (double)CurrentPiece.level.lockDelay;
+                int equals = (int)(lockDelayPercentage * 22);
+                for(int i = 0; i < 22; i++)
                 {
-                    if(i >= equals)
+                    if(i < equals)
                     {
-                        Console.Write("=");
+                        Console.Write(" ");
                     }
                     else
                     {
-                        Console.Write(" ");
+                        Console.Write("=");
                     }
                 }
                 Console.SetCursorPosition(12, 25);
@@ -1286,13 +1333,13 @@ namespace Game
                     ldr -= 2;
                 }
                 Console.SetCursorPosition(0, 5);
-                Console.Write($"Lvl {CurrentPiece.levelNum}");
-                Console.SetCursorPosition(0, 6);
-                Console.Write($"{(int)(CurrentPiece.level.g * 100) / 100d}G {CurrentPiece.level.lockDelay}LD");
+                Console.Write($"Lvl {CurrentPiece.levelNum}\n{(int)(CurrentPiece.level.g * 100) / 100d}G {CurrentPiece.level.lockDelay}LD     ");
+                Console.SetCursorPosition(12, 6);
+                Console.Write("|");
                 Console.SetCursorPosition(0, 7);
-                Console.Write($"{CurrentPiece.lines} lines");
-                Console.SetCursorPosition(0, 8);
-                Console.Write($"Piece: {CurrentPiece.piece}");
+                Console.Write($"{CurrentPiece.lines} lines\n\nDelays:\n{CurrentPiece.level.are} Spawn\n{CurrentPiece.level.lineAre} Line");
+                Console.SetCursorPosition(0, 29);
+                Console.Write($"{Program.fps} FPS, {Program.tps} / 60 TPS");
             }
             else
             {
@@ -2108,9 +2155,16 @@ namespace Game
         {
             prevFramePresses = new bool[8];
         }
-        public static void SaveFramePresses()
+        public static void SaveFramePresses1()
         {
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < 4; i++)
+            {
+                prevFramePresses[i] = NativeKeyboard.IsKeyDown(buttons[i]);
+            }
+        }
+        public static void SaveFramePresses2()
+        {
+            for(int i = 4; i < 8; i++)
             {
                 prevFramePresses[i] = NativeKeyboard.IsKeyDown(buttons[i]);
             }
