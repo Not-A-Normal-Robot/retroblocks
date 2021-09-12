@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,14 +6,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="levelup.wav" />
-    <None Remove="lineclear1.wav" />
-    <None Remove="lineclear2.wav" />
-    <None Remove="lineclear3.wav" />
-    <None Remove="lineclear4.wav" />
-    <None Remove="topout.wav" />
-    <None Remove="tspin.wav" />
+    <None Remove="sfx\levelup.wav" />
+    <None Remove="sfx\lineclear1.wav" />
+    <None Remove="sfx\lineclear2.wav" />
+    <None Remove="sfx\lineclear3.wav" />
+    <None Remove="sfx\lineclear4.wav" />
+    <None Remove="sfx\topout.wav" />
+    <None Remove="sfx\tspin.wav" />
   </ItemGroup>
+
 
   <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
@@ -24,15 +25,27 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="levelup.wav" />
-    <Resource Include="lineclear1.wav" />
-    <Resource Include="lineclear2.wav">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="lineclear3.wav" />
-    <Resource Include="lineclear4.wav" />
-    <Resource Include="topout.wav" />
-    <Resource Include="tspin.wav" />
+    <Content Include="sfx\levelup.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="sfx\lineclear1.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="sfx\lineclear2.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="sfx\lineclear3.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="sfx\lineclear4.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="sfx\topout.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="sfx\tspin.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

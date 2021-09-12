@@ -19,3 +19,10 @@ D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\runtimes\unix\lib\netcoreapp3
 D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\runtimes\win\lib\netcoreapp3.0\System.Drawing.Common.dll
 D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\runtimes\win\lib\netcoreapp3.0\System.Windows.Extensions.dll
 D:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.csproj.CopyComplete
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\sfx\levelup.wav
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\sfx\lineclear1.wav
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\sfx\lineclear2.wav
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\sfx\lineclear3.wav
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\sfx\lineclear4.wav
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\sfx\topout.wav
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\sfx\tspin.wav

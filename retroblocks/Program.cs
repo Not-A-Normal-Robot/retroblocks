@@ -280,8 +280,8 @@ namespace Game
             }
             if (areTimer > level.are)
             {
-                Spawn();
                 areTimer = -1;
+                Spawn();
             }
             ticksThisSecond++;
         }
@@ -678,7 +678,7 @@ namespace Game
         {
             state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], }; 
             xoffset = 2;
-            yoffset = 18;
+            yoffset = 19;
             rotated = false;
             triedCw = false;
             triedCcw = false;
@@ -823,8 +823,10 @@ namespace Game
             bool failed = false;
             Piece p = Piece.GetPiece(piece);
             bool[][] m = Matrix.state;
+            Vector2D kickUsed = new Vector2D(0,0);
             for(int i = 0; i < p.cwKicks[0].Length; i++)
             {
+                kickUsed = p.cwKicks[rotState][i];
                 for (int x = 0; x < 5; x++)
                 {
                     for (int y = 0; y < 5; y++)
@@ -871,6 +873,8 @@ namespace Game
                     ResetLockDelay();
                 }
                 CurrentPiece.rotated = true;
+                xoffset += kickUsed.x;
+                yoffset += kickUsed.y;
             }
         }
         public static void RotCCW()
@@ -892,8 +896,10 @@ namespace Game
             bool failed = false;
             Piece p = Piece.GetPiece(piece);
             bool[][] m = Matrix.state;
+            Vector2D kickUsed = new Vector2D(0, 0);
             for (int i = 0; i < p.ccwKicks[0].Length; i++)
             {
+                kickUsed = p.ccwKicks[rotState][i];
                 for (int x = 0; x < 5; x++)
                 {
                     for (int y = 0; y < 5; y++)
@@ -940,6 +946,8 @@ namespace Game
                     ResetLockDelay();
                 }
                 CurrentPiece.rotated = true;
+                xoffset += kickUsed.x;
+                yoffset += kickUsed.y;
             }
         }
         public static void Rot180()
@@ -961,8 +969,10 @@ namespace Game
             bool failed = false;
             Piece p = Piece.GetPiece(piece);
             bool[][] m = Matrix.state;
+            Vector2D kickUsed = new Vector2D(0, 0);
             for (int i = 0; i < p.flipKicks[0].Length; i++)
             {
+                kickUsed = p.flipKicks[rotState][i];
                 for (int x = 0; x < 5; x++)
                 {
                     for (int y = 0; y < 5; y++)
@@ -1009,6 +1019,8 @@ namespace Game
                     ResetLockDelay();
                 }
                 CurrentPiece.rotated = true;
+                xoffset += kickUsed.x;
+                yoffset += kickUsed.y;
             }
         }
         public static void Hold()
@@ -1785,7 +1797,7 @@ namespace Game
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 2
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 2 => L
-                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1, -1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
                 },
                 new Vector2D[4][]
                 {
@@ -1848,7 +1860,7 @@ namespace Game
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 2
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 2 => L
-                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1, -1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
                 },
                 new Vector2D[4][]
                 {
@@ -1972,7 +1984,7 @@ namespace Game
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 2
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 2 => L
-                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1, -1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
                 },
                 new Vector2D[4][]
                 {
@@ -2096,7 +2108,7 @@ namespace Game
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 2
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 2 => L
-                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1, -1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
                 },
                 new Vector2D[4][]
                 {
@@ -2292,7 +2304,7 @@ namespace Game
         {
             list = new Levels[80];
             // TODO: make other levels when different mode
-            /*for (int i = 0; i < 80; i++)
+            for (int i = 0; i < 80; i++)
             {
                 if(i < 20)
                 {
@@ -2327,11 +2339,11 @@ namespace Game
                     list[i] = new Levels(21, 6, 0, 2, 4, true, false, true, 3, 3);
                 } // Blind blockstacking simulator
                 // Get GM grade
-            }*/
-            for(int i = 0; i < 80; i++)
-            {
-                list[i] = new Levels(0,2147483647,-1,0,0,false,true,false,4,1);
             }
+            // for(int i = 0; i < 80; i++)
+            // {
+            //     list[i] = new Levels(0,2147483647,-1,0,0,false,true,false,4,1);
+            // }
         }
     }
     public static class Controls
@@ -2472,10 +2484,10 @@ namespace Game
 
         public static void Setup()
         {
-            lineClear1 = new SoundPlayer(Environment.CurrentDirectory + "\\lineclear1.wav");
-            lineClear2 = new SoundPlayer(Environment.CurrentDirectory + "\\lineclear2.wav");
-            lineClear3 = new SoundPlayer(Environment.CurrentDirectory + "\\lineclear3.wav");
-            lineClear4 = new SoundPlayer(Environment.CurrentDirectory + "\\lineclear4.wav");
+            lineClear1 = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\lineclear1.wav");
+            lineClear2 = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\lineclear2.wav");
+            lineClear3 = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\lineclear3.wav");
+            lineClear4 = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\lineclear4.wav");
             lineClear1.Load();
             lineClear2.Load();
             lineClear3.Load();
