@@ -11,3 +11,11 @@ D:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.csproj.CoreCompil
 D:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.dll
 D:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.pdb
 D:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.genruntimeconfig.cache
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\Microsoft.Win32.SystemEvents.dll
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\System.Drawing.Common.dll
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\System.Windows.Extensions.dll
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\runtimes\win\lib\netcoreapp3.0\Microsoft.Win32.SystemEvents.dll
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\runtimes\unix\lib\netcoreapp3.0\System.Drawing.Common.dll
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\runtimes\win\lib\netcoreapp3.0\System.Drawing.Common.dll
+D:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\runtimes\win\lib\netcoreapp3.0\System.Windows.Extensions.dll
+D:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.csproj.CopyComplete

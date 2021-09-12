@@ -3,7 +3,7 @@ using System.Timers;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Linq;
-using System.Diagnostics;
+using System.Media;
 
 namespace Game
 {
@@ -26,10 +26,11 @@ namespace Game
             Console.CursorVisible = false;
             Console.ForegroundColor = ConsoleColor.Green;
             Console.SetWindowSize(50, 30);
-            Console.SetBufferSize(50, 31);
+            Console.SetBufferSize(50, 30);
             DisableResize();
             #endregion
             #region Main Menu
+            Sounds.Setup();
             Menu.Main.Start();
             Console.Clear();
             tps = 0;
@@ -58,6 +59,7 @@ namespace Game
             frameTimer.Elapsed += CurrentPiece.UpdateLines;
             frameTimer.Elapsed += CurrentPiece.MovePiece;
             frameTimer.Elapsed += CurrentPiece.SpinPiece;
+            frameTimer.Elapsed += CurrentPiece.DasPiece;
             frameTimer.AutoReset = true;
             frameTimer.Enabled = true;
             secondTimer = new Timer(1000);
@@ -206,7 +208,7 @@ namespace Game
         }
         private static int leftDasTimer;
         private static int rightDasTimer;
-        public static Levels level;
+        public static Levels level { get { return Levels.list[levelNum]; } }
         public static int lockDelayTimer;
         public static int lines;
         public static int lockDelayResets;
@@ -225,6 +227,14 @@ namespace Game
         public static double leftoverG;
         public static bool[] lined;
         public static int ticksThisSecond;
+        public static bool btb;
+        public static int combo;
+        public static string lastClear;
+        public static bool rotated;
+        // prevent IRS and rotation at the same time
+        private static bool triedCw;
+        private static bool triedCcw;
+        private static bool tried180;
         public static int levelNum {
             get
             {
@@ -262,6 +272,7 @@ namespace Game
                 {
                     LockPiece(null, null);
                 }
+                leftoverG = 0;
             }
             else
             {
@@ -272,6 +283,7 @@ namespace Game
                 Spawn();
                 areTimer = -1;
             }
+            ticksThisSecond++;
         }
         public static void UpdateGravity()
         {
@@ -325,6 +337,26 @@ namespace Game
                 lined = new bool[40];
             } // blocks above cleared line fall
 
+            if (Array.IndexOf(lined, true) > -1 && lineAreTimer == -1)
+            {
+                lineAreTimer = 0;
+                int l = lined.Count(b => b);
+                switch (l)
+                {
+                    case 1:
+                        lastClear = "Single   ";
+                        break;
+                    case 2:
+                        lastClear = "Double   ";
+                        break;
+                    case 3:
+                        lastClear = "Triple   ";
+                        break;
+                    case 4:
+                        lastClear = "Quadruple";
+                        break;
+                }
+            }
         }
         public static void MovePiece(object o, ElapsedEventArgs _)
         {
@@ -336,26 +368,8 @@ namespace Game
                 {
                     if (!Controls.prevFramePresses[0])
                     {
+                        rightDasTimer = 0;
                         Left();
-                    }
-                    if (leftDasTimer > level.das)
-                    {
-                        if (level.arr == 0)
-                        {
-                            for (int i = 0; i < 9; i++)
-                            {
-                                Left();
-                            }
-                        }
-                        else
-                        {
-                            if (leftDasTimer > level.das + level.arr)
-                            {
-                                leftDasTimer = level.das;
-                                Left();
-                            }
-                            leftDasTimer++;
-                        }
                     }
                 }
             }
@@ -367,26 +381,8 @@ namespace Game
                 rightDasTimer++;
                 if (!Controls.prevFramePresses[1])
                 {
+                    leftDasTimer = 0;
                     Right();
-                }
-                if (rightDasTimer > level.das)
-                {
-                    if (level.arr == 0)
-                    {
-                        for (int i = 0; i < 9; i++)
-                        {
-                            Right();
-                        }
-                    }
-                    else
-                    {
-                        if (rightDasTimer > level.das + level.arr)
-                        {
-                            rightDasTimer = level.das;
-                            Right();
-                        }
-                        rightDasTimer++;
-                    }
                 }
             }
             else { rightDasTimer = 0; }
@@ -416,19 +412,40 @@ namespace Game
             // Clockwise
             if (NativeKeyboard.IsKeyDown(Controls.rotCw) && !Controls.prevFramePresses[4] && areTimer == -1)
             {
-                RotCW();
+                if (rotated || rotState == 0 || triedCw)
+                {
+                    RotCW();
+                }
+                else
+                {
+                    triedCw = true;
+                }
             }
 
             // Counterclockwise
             if (NativeKeyboard.IsKeyDown(Controls.rotCcw) && !Controls.prevFramePresses[5] && areTimer == -1)
             {
-                RotCCW();
+                if (rotated || rotState == 0 || triedCcw)
+                {
+                    RotCCW();
+                }
+                else
+                {
+                    triedCcw = true;
+                }
             }
 
             // 180 rotation
             if (NativeKeyboard.IsKeyDown(Controls.rot180) && !Controls.prevFramePresses[6])
             {
-                Rot180();
+                if (rotated || rotState == 0 || tried180)
+                {
+                    Rot180();
+                }
+                else
+                {
+                    tried180 = true;
+                }
             }
 
             // Hold
@@ -438,6 +455,49 @@ namespace Game
             }
 
             Controls.SaveFramePresses2();
+        }
+        public static void DasPiece(object o, ElapsedEventArgs _)
+        {
+
+            if (leftDasTimer > level.das)
+            {
+                if (level.arr == 0)
+                {
+                    for (int i = 0; i < 9; i++)
+                    {
+                        Left();
+                    }
+                }
+                else
+                {
+                    if (leftDasTimer > level.das + level.arr)
+                    {
+                        leftDasTimer = level.das;
+                        Left();
+                    }
+                    leftDasTimer++;
+                }
+            }
+
+            if (rightDasTimer > level.das)
+            {
+                if (level.arr == 0)
+                {
+                    for (int i = 0; i < 9; i++)
+                    {
+                        Right();
+                    }
+                }
+                else
+                {
+                    if (rightDasTimer > level.das + level.arr)
+                    {
+                        rightDasTimer = level.das;
+                        Right();
+                    }
+                    rightDasTimer++;
+                }
+            }
         }
         public static void Setup()
         {
@@ -467,13 +527,13 @@ namespace Game
             piecenum = 0;
             leftDasTimer = Controls.das;
             rightDasTimer = Controls.das;
-            level = Levels.list[0];
             score = 0;
             leftoverG = 0d;
             areTimer = -1;
             lineAreTimer = -1;
             ticksThisSecond = 0;
             Controls.Setup();
+            combo = -1;
         }
         public static void NextPiece()
         {
@@ -521,7 +581,7 @@ namespace Game
         public static void LockPiece(object o, ElapsedEventArgs _)
         {
             HoldPiece.used = false;
-            while(!landed)
+            for(int i = 0; i < 40 && !landed; i++)
             {
                 Fall(null, null);
                 score += 2;
@@ -546,7 +606,6 @@ namespace Game
                 #endregion
                     )
                 {
-                    ClearLine(y);
                     linesCleared++;
                     lined[y] = true;
                     for(int e = 0; e < 10; e++)
@@ -559,37 +618,71 @@ namespace Game
             {
                 case 0:
                     lineAreTimer = -1;
+                    combo = -1;
+                    lastClear = "         ";
                     break;
                 case 1:
                     lines++;
                     score += (int)Math.Floor(lines / 10d) * 100;
                     lineAreTimer = 0;
-                    level = Levels.list[(int)Math.Floor(lines / 10d)];
+                    btb = false;
+                    combo++;
+                    lastClear = "Single   ";
+                    Sounds.lineClear1.Play();
                     break;
                 case 2:
                     lines += 2;
-                    score += (int)Math.Floor(lines / 10d) * 100;
+                    score += (int)Math.Floor(lines / 10d) * 300;
                     lineAreTimer = 0;
+                    btb = false;
+                    combo++;
+                    lastClear = "Double   ";
+                    Sounds.lineClear2.Play();
                     break;
                 case 3:
                     lines += 3;
-                    score += (int)Math.Floor(lines / 10d) * 100;
+                    score += (int)Math.Floor(lines / 10d) * 500;
                     lineAreTimer = 0;
+                    btb = false;
+                    combo++;
+                    lastClear = "Triple   ";
+                    Sounds.lineClear3.Play();
                     break;
                 case 4:
                     lines += 4;
-                    score += (int)Math.Floor(lines / 10d) * 100;
+                    if (btb)
+                    {
+                        score += (int)Math.Floor(lines / 10d) * 1200;
+                    }
+                    else
+                    {
+                        score += (int)Math.Floor(lines / 10d) * 800;
+                    }
                     lineAreTimer = 0;
+                    btb = true;
+                    combo++;
+                    lastClear = "Quadruple";
+                    Sounds.lineClear4.Play();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("5+ line clear!");
             }
+            if(combo > 0)
+            {
+                score += combo * levelNum;
+            }
             areTimer = 0;
+            leftoverG = 0;
         }
         public static void Spawn()
         {
+            state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], }; 
             xoffset = 2;
             yoffset = 18;
+            rotated = false;
+            triedCw = false;
+            triedCcw = false;
+            tried180 = false;
             if (NativeKeyboard.IsKeyDown(Controls.rotCcw)) { rotState = 3; }
        else if (NativeKeyboard.IsKeyDown(Controls.rot180)) { rotState = 2; }
        else if (NativeKeyboard.IsKeyDown(Controls.rotCw )) { rotState = 1; }
@@ -730,7 +823,7 @@ namespace Game
             bool failed = false;
             Piece p = Piece.GetPiece(piece);
             bool[][] m = Matrix.state;
-            for(int i = 0; i < p.cwKicks.Length; i++)
+            for(int i = 0; i < p.cwKicks[0].Length; i++)
             {
                 for (int x = 0; x < 5; x++)
                 {
@@ -777,6 +870,7 @@ namespace Game
                 {
                     ResetLockDelay();
                 }
+                CurrentPiece.rotated = true;
             }
         }
         public static void RotCCW()
@@ -798,7 +892,7 @@ namespace Game
             bool failed = false;
             Piece p = Piece.GetPiece(piece);
             bool[][] m = Matrix.state;
-            for (int i = 0; i < p.ccwKicks.Length; i++)
+            for (int i = 0; i < p.ccwKicks[0].Length; i++)
             {
                 for (int x = 0; x < 5; x++)
                 {
@@ -845,6 +939,7 @@ namespace Game
                 {
                     ResetLockDelay();
                 }
+                CurrentPiece.rotated = true;
             }
         }
         public static void Rot180()
@@ -866,7 +961,7 @@ namespace Game
             bool failed = false;
             Piece p = Piece.GetPiece(piece);
             bool[][] m = Matrix.state;
-            for (int i = 0; i < p.flipKicks.Length; i++)
+            for (int i = 0; i < p.flipKicks[0].Length; i++)
             {
                 for (int x = 0; x < 5; x++)
                 {
@@ -913,6 +1008,7 @@ namespace Game
                 {
                     ResetLockDelay();
                 }
+                CurrentPiece.rotated = true;
             }
         }
         public static void Hold()
@@ -1041,10 +1137,6 @@ namespace Game
                 }
             }
             return false;
-        }
-        public static void ClearLine(int y)
-        {
-            level = Levels.list[(int)Math.Floor(lines/10d)];
         }
     }
     static class Drawer
@@ -1284,6 +1376,7 @@ namespace Game
             Console.SetCursorPosition(0, 0);
             if (!Program.paused)
             {
+                #region Color
                 string[] Picture = Drawer.Picture;
                 for(int i = 0, j = 23; i < 24; i++, j--)
                 {
@@ -1298,48 +1391,11 @@ namespace Game
                     }
                     Console.Write(Picture[j]);
                 }
+                #endregion
                 DrawHoldPiece();
                 DrawNextPieces();
-                Console.SetCursorPosition(12, 24);
-                double lockDelayPercentage = CurrentPiece.lockDelayTimer / (double)CurrentPiece.level.lockDelay;
-                int equals = (int)(lockDelayPercentage * 22);
-                for(int i = 0; i < 22; i++)
-                {
-                    if(i < equals)
-                    {
-                        Console.Write(" ");
-                    }
-                    else
-                    {
-                        Console.Write("=");
-                    }
-                }
-                Console.SetCursorPosition(12, 25);
-                int ldr = 30 - CurrentPiece.lockDelayResets;
-                for(int i = 0; i < 15; i++)
-                {
-                    if(ldr >= 2)
-                    {
-                        Console.Write("″");
-                    }
-                    else if(ldr == 1)
-                    {
-                        Console.Write("'");
-                    }
-                    else
-                    {
-                        Console.Write(" ");
-                    }
-                    ldr -= 2;
-                }
-                Console.SetCursorPosition(0, 5);
-                Console.Write($"Lvl {CurrentPiece.levelNum}\n{(int)(CurrentPiece.level.g * 100) / 100d}G {CurrentPiece.level.lockDelay}LD     ");
-                Console.SetCursorPosition(12, 6);
-                Console.Write("|");
-                Console.SetCursorPosition(0, 7);
-                Console.Write($"{CurrentPiece.lines} lines\n\nDelays:\n{CurrentPiece.level.are} Spawn\n{CurrentPiece.level.lineAre} Line");
-                Console.SetCursorPosition(0, 29);
-                Console.Write($"{Program.fps} FPS, {Program.tps} / 60 TPS");
+                DrawProgressBar();
+                DrawStats();
             }
             else
             {
@@ -1401,6 +1457,157 @@ namespace Game
 
             Console.SetCursorPosition(36, 21);
             Console.Write(GetMinos(CurrentPiece.GetFuturePiece(6).piece[0][2]));
+        }
+        private static void DrawProgressBar()
+        {
+
+            //      * --> gravity
+            //      = --> lock delay
+            //      · --> are
+            //      : --> line are
+
+            Console.SetCursorPosition(12, 24);
+            double p = !CurrentPiece.landed && CurrentPiece.level.g < 0.5 ? -CurrentPiece.leftoverG - 8 * CurrentPiece.level.g: CurrentPiece.areTimer == -1 ? -(double)CurrentPiece.lockDelayTimer / CurrentPiece.level.lockDelay : CurrentPiece.lineAreTimer == -1 ? -(double)CurrentPiece.areTimer / CurrentPiece.level.are : -(double)CurrentPiece.lineAreTimer / CurrentPiece.level.lineAre;
+            int e = (int)(p * 22) + 22;
+            if(!CurrentPiece.landed && CurrentPiece.level.g < 0.5 && CurrentPiece.areTimer == -1)
+            {
+                for (int i = 0; i < 22; i++)
+                {
+                    if (i > e)
+                    {
+                        Console.Write("=");
+                    }
+                    else
+                    {
+                        Console.Write("*");
+                    }
+                }
+
+            }
+            else if (CurrentPiece.areTimer == -1)
+            {
+                for (int i = 0; i < 22; i++)
+                {
+                    if (i > e)
+                    {
+                        Console.Write("·");
+                    }
+                    else
+                    {
+                        Console.Write("=");
+                    }
+                }
+            }
+            else if (CurrentPiece.lineAreTimer == -1 && CurrentPiece.level.g < 0.5)
+            {
+                for (int i = 0; i < 22; i++)
+                {
+                    if (i > e)
+                    {
+                        Console.Write("*");
+                    }
+                    else
+                    {
+                        Console.Write("·");
+                    }
+                }
+            }
+            else if (CurrentPiece.lineAreTimer == -1)
+            {
+                for (int i = 0; i < 22; i++)
+                {
+                    if (i > e)
+                    {
+                        Console.Write("=");
+                    }
+                    else
+                    {
+                        Console.Write("·");
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 22; i++)
+                {
+                    if (i > e)
+                    {
+                        Console.Write("·");
+                    }
+                    else
+                    {
+                        Console.Write(":");
+                    }
+                }
+            }
+            Console.SetCursorPosition(12, 25);
+            int ldr = 30 - CurrentPiece.lockDelayResets;
+            for (int i = 0; i < 15; i++)
+            {
+                if (ldr >= 2)
+                {
+                    Console.Write("″");
+                }
+                else if (ldr == 1)
+                {
+                    Console.Write("'");
+                }
+                else
+                {
+                    Console.Write(" ");
+                }
+                ldr -= 2;
+            }
+        }
+        private static void DrawStats()
+        {
+
+            int l = CurrentPiece.lines - (CurrentPiece.levelNum * 10);
+            string e = "";
+            switch (l)
+            {
+                default:
+                    e = "[··········]";
+                    break;
+                case 1:
+                    e = "[=·········]";
+                    break;
+                case 2:
+                    e = "[==········]";
+                    break;
+                case 3:
+                    e = "[===·······]";
+                    break;
+                case 4:
+                    e = "[====······]";
+                    break;
+                case 5:
+                    e = "[=====·····]";
+                    break;
+                case 6:
+                    e = "[======····]";
+                    break;
+                case 7:
+                    e = "[=======···]";
+                    break;
+                case 8:
+                    e = "[========··]";
+                    break;
+                case 9:
+                    e = "[=========·]";
+                    break;
+            }
+            Console.SetCursorPosition(0, 5);
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.Write($"{(CurrentPiece.btb ? "Back To Back" : "            ")}");
+            Console.SetCursorPosition(0, 6);
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write($"{CurrentPiece.lastClear}");
+            Console.SetCursorPosition(0, 8);
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write($"Lvl {CurrentPiece.levelNum}\n{(int)(CurrentPiece.level.g * 100) / 100d}G   \n{CurrentPiece.level.lockDelay}LD     \n\n\n{CurrentPiece.lines}/{(CurrentPiece.levelNum + 1) * 10} lines\n{e}\n\nDelays:\n{CurrentPiece.level.are} Spawn \n{CurrentPiece.level.lineAre} Line \n\n\nScore\n{CurrentPiece.score}");
+            Console.SetCursorPosition(0, 29);
+            Console.Write($"{Program.fps} FPS, {Program.tps} / 60 TPS");
         }
         private static string GetMinos(bool[] minoTypes)
         {
@@ -1951,7 +2158,7 @@ namespace Game
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1,  1), new Vector2D(0, -2), new Vector2D(-1, -2) }, // 0 => R
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1, -1), new Vector2D(0,  2), new Vector2D( 1,  2) }, // R => 2
                     new Vector2D[5] { new Vector2D(0, 0), new Vector2D( 1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // 2 => L
-                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D( 1,  1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
+                    new Vector2D[5] { new Vector2D(0, 0), new Vector2D(-1, 0), new Vector2D(-1, -1), new Vector2D(0, -2), new Vector2D( 1, -2) }, // L => 0
                 },
                 new Vector2D[4][]
                 {
@@ -2085,11 +2292,11 @@ namespace Game
         {
             list = new Levels[80];
             // TODO: make other levels when different mode
-            for (int i = 0; i < 80; i++)
+            /*for (int i = 0; i < 80; i++)
             {
                 if(i < 20)
                 {
-                    list[i] = new Levels(0.001 * (1 / Math.Pow(0.8 - (i * 0.007), i)), 30, -1, 10, 20, false, true, false, 20, 15);
+                    list[i] = new Levels(Math.Min(0.01 * (1 / Math.Pow(0.8 - (i * 0.007), i)), 21), 30, -1, 10, 20, false, true, false, 20, 15);
                 } // Actual Gravity Increase
                 else if(i < 26)
                 {                     // G    lockdelay  invis        are                   line are
@@ -2118,8 +2325,12 @@ namespace Game
                 else if(i < 80)
                 {
                     list[i] = new Levels(21, 6, 0, 2, 4, true, false, true, 3, 3);
-                } // Blind tetris simulator
+                } // Blind blockstacking simulator
                 // Get GM grade
+            }*/
+            for(int i = 0; i < 80; i++)
+            {
+                list[i] = new Levels(0,2147483647,-1,0,0,false,true,false,4,1);
             }
         }
     }
@@ -2141,7 +2352,7 @@ namespace Game
         {
             get
             {
-                return new int[] { left, right, hardDrop, softDrop, rotCw, rotCcw, rot180, hold };
+                return new int[8] { left, right, hardDrop, softDrop, rotCw, rotCcw, rot180, hold };
             }
         }
         public readonly static int retry = 82;
@@ -2196,14 +2407,15 @@ namespace Game
                     useSonicDrop = Convert.ToBoolean(reader.ReadLine());
                     reader.Close();
                     // Checks for duplicates
-                    if (buttons.GroupBy(x => x).Any(g => g.Count() > 1))
+                    if (buttons.Length != buttons.Distinct().Count())
                     {
                         ResetControls();
                     }
                     #endregion
                 }
-                catch
+                catch(Exception e)
                 {
+                    Console.WriteLine(e);
                     reader.Close();
                     ResetControls();
                 }
@@ -2230,7 +2442,7 @@ namespace Game
             #endregion
             #region Save
             StreamWriter writer = new StreamWriter(dataLoc + "\\Retroblocks\\config.txt");
-            writer.Write($"{left}\n{right}\n{hardDrop}\n{softDrop}\n{rotCw}\n{rotCcw}\n{rot180}\n{das}\n{arr}\n{useSonicDrop}");
+            writer.Write($"{left}\n{right}\n{hardDrop}\n{softDrop}\n{rotCw}\n{rotCcw}\n{rot180}\n{hold}\n{das}\n{arr}\n{useSonicDrop}");
             writer.Close();
             #endregion
         }
@@ -2251,6 +2463,26 @@ namespace Game
         }
 
     }
+    public static class Sounds
+    {
+        public static SoundPlayer lineClear1;
+        public static SoundPlayer lineClear2;
+        public static SoundPlayer lineClear3;
+        public static SoundPlayer lineClear4;
+
+        public static void Setup()
+        {
+            lineClear1 = new SoundPlayer(Environment.CurrentDirectory + "\\lineclear1.wav");
+            lineClear2 = new SoundPlayer(Environment.CurrentDirectory + "\\lineclear2.wav");
+            lineClear3 = new SoundPlayer(Environment.CurrentDirectory + "\\lineclear3.wav");
+            lineClear4 = new SoundPlayer(Environment.CurrentDirectory + "\\lineclear4.wav");
+            lineClear1.Load();
+            lineClear2.Load();
+            lineClear3.Load();
+            lineClear4.Load();
+        }
+    }
+
 }
 #region Keyboard integration
 /// <summary>

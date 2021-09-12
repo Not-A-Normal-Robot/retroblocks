@@ -9,24 +9,14 @@ namespace Menu
             "Credits\n" +
             "\n" +
             "\n" +
-            "Designer\n" +
-            "\n" +
-            "NOT_A_ROBOT\n" +
-            "github.com/Not-A-Normal-Robot/\n" +
-            "github.com/Not-A-Normal-Robot/retroblocks\n" +
-            "\n" +
-            "\n" +
-            "\n" +
             "Developer\n" +
             "\n" +
             "NOT_A_ROBOT\n" +
             "\n" +
             "\n" +
             "\n" +
-            "Special Thanks\n" +
-            "\n" +
-            "YOU\n" +
-            "For playing this game\n" +
+            "SFX\n" +
+            "SFXR by DrPetter" +
             "\n" +
             "\n" +
             "Press Enter to close";

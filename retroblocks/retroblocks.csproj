@@ -6,7 +6,33 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="levelup.wav" />
+    <None Remove="lineclear1.wav" />
+    <None Remove="lineclear2.wav" />
+    <None Remove="lineclear3.wav" />
+    <None Remove="lineclear4.wav" />
+    <None Remove="topout.wav" />
+    <None Remove="tspin.wav" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Windows.Extensions" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="levelup.wav" />
+    <Resource Include="lineclear1.wav" />
+    <Resource Include="lineclear2.wav">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="lineclear3.wav" />
+    <Resource Include="lineclear4.wav" />
+    <Resource Include="topout.wav" />
+    <Resource Include="tspin.wav" />
   </ItemGroup>
 
 </Project>

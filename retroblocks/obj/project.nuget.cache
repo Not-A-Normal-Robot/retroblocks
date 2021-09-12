@@ -1,8 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "3DLrS/gIg+2rWYvxgD3YA3azzrvQ5b5CVvmtV4ON3nqybUTu1A5YgdCDsqs8L9tK0L8bItZFQMVupyL33L2aGQ==",
+  "dgSpecHash": "Vq16X41g8c9DiI59DmFlhJOh9rMlcPvaDEA4Gua4YZ5lMuebVnU43UDl/aVildU0Fg66cUx8u2w4XtTkJBfSSw==",
   "success": true,
   "projectFilePath": "D:\\retroblocks\\retroblocks\\retroblocks.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\Cesium\\.nuget\\packages\\microsoft.netcore.platforms\\5.0.0\\microsoft.netcore.platforms.5.0.0.nupkg.sha512",
+    "C:\\Users\\Cesium\\.nuget\\packages\\microsoft.win32.systemevents\\5.0.0\\microsoft.win32.systemevents.5.0.0.nupkg.sha512",
+    "C:\\Users\\Cesium\\.nuget\\packages\\system.drawing.common\\5.0.0\\system.drawing.common.5.0.0.nupkg.sha512",
+    "C:\\Users\\Cesium\\.nuget\\packages\\system.windows.extensions\\5.0.0\\system.windows.extensions.5.0.0.nupkg.sha512"
+  ],
   "logs": []
 }
