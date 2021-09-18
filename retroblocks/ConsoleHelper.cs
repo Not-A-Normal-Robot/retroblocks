@@ -39,7 +39,6 @@ public static class ConsoleHelper
 
     public static FontInfo[] SetCurrentFont(string font, short fontSize = 0)
     {
-        Console.WriteLine("Set Current Font: " + font);
 
         FontInfo before = new FontInfo
         {

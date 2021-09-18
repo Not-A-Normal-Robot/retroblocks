@@ -25,8 +25,10 @@ namespace Game
             Console.WriteLine("Loading Retroblocks\nPlease wait...");
             Console.CursorVisible = false;
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.SetWindowSize(50, 30);
-            Console.SetBufferSize(50, 30);
+            Config.LoadConfig();
+            ConsoleHelper.SetCurrentFont("Consolas", (short)Config.fontSize);
+            Console.SetWindowSize(50, 32);
+            Console.SetBufferSize(50, 32);
             DisableResize();
             #endregion
             #region Main Menu
@@ -38,8 +40,8 @@ namespace Game
             framesThisSecond = 0;
             #endregion
             #region Setup game
-            Console.SetWindowSize(48, 30);
-            Console.SetBufferSize(48, 30);
+            // Console.SetBufferSize(48, 30);
+            // Console.SetWindowSize(48, 30);
             Levels.Setup();
             Piece.Setup();
             BagRandomizer.Setup();
@@ -203,6 +205,10 @@ namespace Game
                         }
                     }
                 }
+                if(areTimer > -1 || lineAreTimer > -1)
+                {
+                    return true;
+                }
                 return false;
             }
         }
@@ -264,8 +270,7 @@ namespace Game
             {
                 areTimer++;
             }
-
-            if (landed)
+            else if (landed)
             {
                 lockDelayTimer++;
                 if (lockDelayTimer > level.lockDelay)
@@ -361,12 +366,12 @@ namespace Game
         public static void MovePiece(object o, ElapsedEventArgs _)
         {
             // Left
-            if (NativeKeyboard.IsKeyDown(Controls.left))
+            if (NativeKeyboard.IsKeyDown(Config.left))
             {
                 leftDasTimer++;
                 if (areTimer < 0)
                 {
-                    if (!Controls.prevFramePresses[0])
+                    if (!Config.prevFramePresses[0])
                     {
                         rightDasTimer = 0;
                         Left();
@@ -376,10 +381,10 @@ namespace Game
             else { leftDasTimer = 0; }
 
             // Right
-            if (NativeKeyboard.IsKeyDown(Controls.right))
+            if (NativeKeyboard.IsKeyDown(Config.right))
             {
                 rightDasTimer++;
-                if (!Controls.prevFramePresses[1])
+                if (!Config.prevFramePresses[1])
                 {
                     leftDasTimer = 0;
                     Right();
@@ -388,29 +393,29 @@ namespace Game
             else { rightDasTimer = 0; }
 
             // Hard drop
-            if (NativeKeyboard.IsKeyDown(Controls.hardDrop) && !Controls.prevFramePresses[2] && areTimer == -1)
+            if (NativeKeyboard.IsKeyDown(Config.hardDrop) && !Config.prevFramePresses[2] && areTimer == -1)
             {
                 LockPiece(null, null);
             }
 
             // Soft drop
-            if (NativeKeyboard.IsKeyDown(Controls.softDrop))
+            if (NativeKeyboard.IsKeyDown(Config.softDrop) && landed == false)
             {
                 Fall(null, null);
                 score += 1;
-                while(!landed && Controls.useSonicDrop && areTimer == -1)
+                while(!landed && Config.useSonicDrop && areTimer == -1)
                 {
                     Fall(null, null);
                     score += 1;
                 }
             }
 
-            Controls.SaveFramePresses1();
+            Config.SaveFramePresses1();
         }
         public static void SpinPiece(object o, ElapsedEventArgs _)
         {
             // Clockwise
-            if (NativeKeyboard.IsKeyDown(Controls.rotCw) && !Controls.prevFramePresses[4] && areTimer == -1)
+            if (NativeKeyboard.IsKeyDown(Config.rotCw) && !Config.prevFramePresses[4] && areTimer == -1)
             {
                 if (rotated || rotState == 0 || triedCw)
                 {
@@ -423,7 +428,7 @@ namespace Game
             }
 
             // Counterclockwise
-            if (NativeKeyboard.IsKeyDown(Controls.rotCcw) && !Controls.prevFramePresses[5] && areTimer == -1)
+            if (NativeKeyboard.IsKeyDown(Config.rotCcw) && !Config.prevFramePresses[5] && areTimer == -1)
             {
                 if (rotated || rotState == 0 || triedCcw)
                 {
@@ -436,7 +441,7 @@ namespace Game
             }
 
             // 180 rotation
-            if (NativeKeyboard.IsKeyDown(Controls.rot180) && !Controls.prevFramePresses[6])
+            if (NativeKeyboard.IsKeyDown(Config.rot180) && !Config.prevFramePresses[6])
             {
                 if (rotated || rotState == 0 || tried180)
                 {
@@ -449,12 +454,12 @@ namespace Game
             }
 
             // Hold
-            if (NativeKeyboard.IsKeyDown(Controls.hold) && !Controls.prevFramePresses[7] && areTimer < 0)
+            if (NativeKeyboard.IsKeyDown(Config.hold) && !Config.prevFramePresses[7] && areTimer < 0)
             {
                 Hold();
             }
 
-            Controls.SaveFramePresses2();
+            Config.SaveFramePresses2();
         }
         public static void DasPiece(object o, ElapsedEventArgs _)
         {
@@ -525,14 +530,14 @@ namespace Game
             lined = new bool[40];
             piece = BagRandomizer.output[BagRandomizer.current][0];
             piecenum = 0;
-            leftDasTimer = Controls.das;
-            rightDasTimer = Controls.das;
+            leftDasTimer = Config.das;
+            rightDasTimer = Config.das;
             score = 0;
             leftoverG = 0d;
             areTimer = -1;
             lineAreTimer = -1;
             ticksThisSecond = 0;
-            Controls.Setup();
+            Config.Setup();
             combo = -1;
         }
         public static void NextPiece()
@@ -683,10 +688,10 @@ namespace Game
             triedCw = false;
             triedCcw = false;
             tried180 = false;
-            if (NativeKeyboard.IsKeyDown(Controls.rotCcw)) { rotState = 3; }
-       else if (NativeKeyboard.IsKeyDown(Controls.rot180)) { rotState = 2; }
-       else if (NativeKeyboard.IsKeyDown(Controls.rotCw )) { rotState = 1; }
-       else                                                { rotState = 0; }
+            if (NativeKeyboard.IsKeyDown(Config.rotCcw)) { rotState = 3; }
+       else if (NativeKeyboard.IsKeyDown(Config.rot180)) { rotState = 2; }
+       else if (NativeKeyboard.IsKeyDown(Config.rotCw )) { rotState = 1; }
+       else                                              { rotState = 0; }
             for(int x = 0; x < 5; x++)
             {
                 for(int y = 0; y < 5; y++)
@@ -703,10 +708,12 @@ namespace Game
                     nextPieceSpawn[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum]).piece[0][y][x];
                 }
             }
-            if(NativeKeyboard.IsKeyDown(Controls.hold)) { Hold(); }
+            if(NativeKeyboard.IsKeyDown(Config.hold)) { Hold(); }
             lockDelayResets = 0;
 
-            if (NativeKeyboard.IsKeyDown(Controls.hardDrop) && !Controls.prevFramePresses[2]) { LockPiece(null, null); }
+            if (NativeKeyboard.IsKeyDown(Config.hardDrop) && !Config.prevFramePresses[2]) { LockPiece(null, null); }
+            leftoverG = 0;
+            lockDelayTimer = 0;
         }
         public static void Left()
         {
@@ -1033,9 +1040,9 @@ namespace Game
 
                 xoffset = 2;
                 yoffset = 18;
-                if (NativeKeyboard.IsKeyDown(Controls.rotCcw)) { rotState = 3; }
-                else if (NativeKeyboard.IsKeyDown(Controls.rot180)) { rotState = 2; }
-                else if (NativeKeyboard.IsKeyDown(Controls.rotCw)) { rotState = 1; }
+                if (NativeKeyboard.IsKeyDown(Config.rotCcw)) { rotState = 3; }
+                else if (NativeKeyboard.IsKeyDown(Config.rot180)) { rotState = 2; }
+                else if (NativeKeyboard.IsKeyDown(Config.rotCw)) { rotState = 1; }
                 else { rotState = 0; }
                 for (int x = 0; x < 5; x++)
                 {
@@ -1046,7 +1053,7 @@ namespace Game
                 }
                 NextPiece();
                 UpdateGhost();
-                if (NativeKeyboard.IsKeyDown(Controls.hardDrop) && !Controls.prevFramePresses[2]) { LockPiece(null, null); }
+                if (NativeKeyboard.IsKeyDown(Config.hardDrop) && !Config.prevFramePresses[2]) { LockPiece(null, null); }
             }
             else if (HoldPiece.used == false)
             {
@@ -1055,9 +1062,9 @@ namespace Game
                 state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40] };
                 xoffset = 2;
                 yoffset = 18;
-                if (NativeKeyboard.IsKeyDown(Controls.rotCcw)) { rotState = 3; }
-                else if (NativeKeyboard.IsKeyDown(Controls.rot180)) { rotState = 2; }
-                else if (NativeKeyboard.IsKeyDown(Controls.rotCw)) { rotState = 1; }
+                if (NativeKeyboard.IsKeyDown(Config.rotCcw)) { rotState = 3; }
+                else if (NativeKeyboard.IsKeyDown(Config.rot180)) { rotState = 2; }
+                else if (NativeKeyboard.IsKeyDown(Config.rotCw)) { rotState = 1; }
                 else { rotState = 0; }
                 for (int x = 0; x < 5; x++)
                 {
@@ -1070,7 +1077,7 @@ namespace Game
                 piece = heldPiece;
                 UpdateGhost();
 
-                if (NativeKeyboard.IsKeyDown(Controls.hardDrop) && !Controls.prevFramePresses[2]) { LockPiece(null, null); }
+                if (NativeKeyboard.IsKeyDown(Config.hardDrop) && !Config.prevFramePresses[2]) { LockPiece(null, null); }
             }
         }
         /// <summary>
@@ -1095,12 +1102,7 @@ namespace Game
         }
         public static void ResetLockDelay()
         {
-            if(landed && lockDelayResets < 30)
-            {
-                lockDelayTimer = 0;
-                lockDelayResets++;
-            }
-            if(!landed)
+            if(landed && lockDelayResets < 30 && areTimer < 0 && lineAreTimer < 0)
             {
                 lockDelayTimer = 0;
                 lockDelayResets++;
@@ -1128,7 +1130,7 @@ namespace Game
                 i++;
             }
         }
-        private static bool IsLanded(bool[][] _state)
+        public static bool IsLanded(bool[][] _state)
         {
 
             for (int y = 0; y < 40; y++)
@@ -1479,7 +1481,7 @@ namespace Game
             //      : --> line are
 
             Console.SetCursorPosition(12, 24);
-            double p = !CurrentPiece.landed && CurrentPiece.level.g < 0.5 ? -CurrentPiece.leftoverG - 8 * CurrentPiece.level.g: CurrentPiece.areTimer == -1 ? -(double)CurrentPiece.lockDelayTimer / CurrentPiece.level.lockDelay : CurrentPiece.lineAreTimer == -1 ? -(double)CurrentPiece.areTimer / CurrentPiece.level.are : -(double)CurrentPiece.lineAreTimer / CurrentPiece.level.lineAre;
+            double p = !CurrentPiece.landed && CurrentPiece.level.g < 0.5 ? -CurrentPiece.leftoverG - 0.07: CurrentPiece.areTimer == -1 ? -(double)CurrentPiece.lockDelayTimer / CurrentPiece.level.lockDelay : CurrentPiece.lineAreTimer == -1 ? (double)CurrentPiece.areTimer / -CurrentPiece.level.are : -(double)CurrentPiece.lineAreTimer / CurrentPiece.level.lineAre;
             int e = (int)(p * 22) + 22;
             if(!CurrentPiece.landed && CurrentPiece.level.g < 0.5 && CurrentPiece.areTimer == -1)
             {
@@ -1661,18 +1663,17 @@ namespace Game
         #region Private methods
         private static string GetSeq()
         {
-            char currentChar;
-            string stringSoFar = "";
+            char[] a = new char[7] { 'Z','L','O','S','J','I','T' };
+            int n = a.Length;
             Random r = new Random();
-            while(stringSoFar.Length < 7)
+            while (n > 1)
             {
-                currentChar = GetChar(r.Next(0, 7));
-                if (stringSoFar.IndexOf(currentChar) == -1)
-                {
-                    stringSoFar += currentChar;
-                }
+                int k = r.Next(n--);
+                char temp = a[n];
+                a[n] = a[k];
+                a[k] = temp;
             }
-            return stringSoFar;
+            return new string(a);
         }
         private static char GetChar(int i) // 0 = Z
         {
@@ -2297,8 +2298,8 @@ namespace Game
             this.pieceInvisible = pieceInvisible;
             this.hold = hold;
             this.nextInvisible = nextInvisible;
-            this.das = Math.Min(Controls.das, das);
-            this.arr = Math.Min(Controls.arr, arr);
+            this.das = Math.Min(Config.das, das);
+            this.arr = Math.Min(Config.arr, arr);
         }
         public static void Setup()
         {
@@ -2342,11 +2343,11 @@ namespace Game
             }
             // for(int i = 0; i < 80; i++)
             // {
-            //     list[i] = new Levels(0,2147483647,-1,0,0,false,true,false,4,1);
+            //     list[i] = new Levels(0,2147483647,-1,1,1,false,true,false,4,1);
             // }
         }
     }
-    public static class Controls
+    public static class Config
     {
         #region Controls
         public static int left;
@@ -2370,6 +2371,7 @@ namespace Game
         public readonly static int retry = 82;
         public readonly static int pause = 27;
         #endregion
+        public static int fontSize;
         /// <summary>
         /// Previous frame presses. Index (0 - 7): L, R, HD, SD, CW, CCW, 180, Hold
         /// </summary>
@@ -2392,12 +2394,12 @@ namespace Game
                 prevFramePresses[i] = NativeKeyboard.IsKeyDown(buttons[i]);
             }
         }
-        public static void LoadControls()
+        public static void LoadConfig()
         {
             string dataLoc = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             if (!File.Exists(dataLoc + "\\Retroblocks\\config.txt"))
             {
-                ResetControls();
+                ResetConfig();
             }
             else
             {
@@ -2417,11 +2419,12 @@ namespace Game
                     das = Convert.ToInt32(reader.ReadLine());
                     arr = Convert.ToInt32(reader.ReadLine());
                     useSonicDrop = Convert.ToBoolean(reader.ReadLine());
+                    fontSize = Convert.ToInt32(reader.ReadLine());
                     reader.Close();
                     // Checks for duplicates
                     if (buttons.Length != buttons.Distinct().Count())
                     {
-                        ResetControls();
+                        ResetConfig();
                     }
                     #endregion
                 }
@@ -2429,16 +2432,16 @@ namespace Game
                 {
                     Console.WriteLine(e);
                     reader.Close();
-                    ResetControls();
+                    ResetConfig();
                 }
             }
         }
-        public static void SaveControls()
+        public static void SaveConfig()
         {
             #region Check for duplicates
             if (buttons.GroupBy(x => x).Any(g => g.Count() > 1))
             {
-                ResetControls();
+                ResetConfig();
             }
             #endregion
             string dataLoc = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -2454,11 +2457,11 @@ namespace Game
             #endregion
             #region Save
             StreamWriter writer = new StreamWriter(dataLoc + "\\Retroblocks\\config.txt");
-            writer.Write($"{left}\n{right}\n{hardDrop}\n{softDrop}\n{rotCw}\n{rotCcw}\n{rot180}\n{hold}\n{das}\n{arr}\n{useSonicDrop}");
+            writer.Write($"{left}\n{right}\n{hardDrop}\n{softDrop}\n{rotCw}\n{rotCcw}\n{rot180}\n{hold}\n{das}\n{arr}\n{useSonicDrop}\n{fontSize}");
             writer.Close();
             #endregion
         }
-        private static void ResetControls()
+        private static void ResetConfig()
         {
             left = 37;
             right = 39;
@@ -2471,7 +2474,8 @@ namespace Game
             das = 10;
             arr = 1;
             useSonicDrop = false;
-            SaveControls();
+            fontSize = 10;
+            SaveConfig();
         }
 
     }

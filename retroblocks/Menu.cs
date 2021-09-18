@@ -30,7 +30,7 @@ namespace Menu
             prevFrameInputs = new bool[100];
             cursorPos = 0;
             HighScores.LoadScores();
-            Controls.LoadControls();
+            Config.LoadConfig();
             while (!start)
             {
                 #region Draw screen
@@ -42,20 +42,22 @@ namespace Menu
                         $"||  RETROBLOCKS  ||\n" +
                         $"===================\n\n" +
                         $"{(cursorPos == 0 ? "> " : "  ")}Start!\n\n" +
+                        $"Settings: \n" +
+                        $"{(cursorPos == 1 ? "> " : "  ")}Font Size: {Config.fontSize} - Default: 10\n\n" +
                         $"Handling: \n" +
-                        $"{(cursorPos == 1 ? "> " : "  ")}DAS: {Controls.das} - Default: 10\n" +
-                        $"{(cursorPos == 2 ? "> " : "  ")}ARR: {Controls.arr} - Default: 1\n" +
-                        $"{(cursorPos == 3 ? "> " : "  ")}Soft Drop Mode: {(Controls.useSonicDrop ? "instant" : "normal")} - Default: normal\n\n" +
+                        $"{(cursorPos == 2 ? "> " : "  ")}DAS: {Config.das} - Default: 10\n" +
+                        $"{(cursorPos == 3 ? "> " : "  ")}ARR: {Config.arr} - Default: 1\n" +
+                        $"{(cursorPos == 4 ? "> " : "  ")}Soft Drop Mode: {(Config.useSonicDrop ? "instant" : "normal")} - Default: normal\n\n" +
                         $"Controls: (Note: Setting up is glitchy :P)\n" +
-                        $"{(cursorPos == 4 ? "> " : "  ")}Left: {Controls.left} - Default: Left Arrow (37)\n" +
-                        $"{(cursorPos == 5 ? "> " : "  ")}Right: {Controls.right} - Default: Right Arrow (39)\n" +
-                        $"{(cursorPos == 6 ? "> " : "  ")}Hard Drop: {Controls.hardDrop} - Default: Space (32)\n" +
-                        $"{(cursorPos == 7 ? "> " : "  ")}Soft Drop: {Controls.softDrop} - Default: Down Arrow (40)\n" +
-                        $"{(cursorPos == 8 ? "> " : "  ")}Rotate Clockwise: {Controls.rotCw} - Default: Up Arrow (38)\n" +
-                        $"{(cursorPos == 9 ? "> " : "  ")}Rotate Counterclockwise: {Controls.rotCcw} - Default: Z (90)\n" +
-                        $"{(cursorPos == 10 ? "> " : "  ")}Rotate 180: {Controls.rot180} - Default: X (88)\n" +
-                        $"{(cursorPos == 11 ? "> " : "  ")}Hold: {Controls.hold} - Default: C (67)\n\n" +
-                        $"{(cursorPos == 12 ? "> " : "  ")}Credits\n" +
+                        $"{(cursorPos == 5 ? "> " : "  ")}Left: {Config.left} - Default: Left Arrow (37)\n" +
+                        $"{(cursorPos == 6 ? "> " : "  ")}Right: {Config.right} - Default: Right Arrow (39)\n" +
+                        $"{(cursorPos == 7 ? "> " : "  ")}Hard Drop: {Config.hardDrop} - Default: Space (32)\n" +
+                        $"{(cursorPos == 8 ? "> " : "  ")}Soft Drop: {Config.softDrop} - Default: Down Arrow (40)\n" +
+                        $"{(cursorPos == 9 ? "> " : "  ")}Rotate Clockwise: {Config.rotCw} - Default: Up Arrow (38)\n" +
+                        $"{(cursorPos == 10 ? "> " : "  ")}Rotate Counterclockwise: {Config.rotCcw} - Default: Z (90)\n" +
+                        $"{(cursorPos == 11 ? "> " : "  ")}Rotate 180: {Config.rot180} - Default: X (88)\n" +
+                        $"{(cursorPos == 12 ? "> " : "  ")}Hold: {Config.hold} - Default: C (67)\n\n" +
+                        $"{(cursorPos == 13 ? "> " : "  ")}Credits\n" +
                         $"Scores:\n" +
                         $"{HighScores.Scores[0]}\n" +
                         $"{HighScores.Scores[1]}\n" +
@@ -88,18 +90,18 @@ namespace Menu
                             break;
                         #endregion
                         case 1:
-                            #region DAS
-                            if (NativeKeyboard.IsKeyDown(39) && Controls.das < 20 && !prevFrameInputs[39])
+                            #region Font Size
+                            if (NativeKeyboard.IsKeyDown(39) && Config.fontSize < 36 && !prevFrameInputs[39])
                             {
-                                Controls.das++;
-                                Controls.SaveControls();
-                                Console.Clear();
+                                Config.fontSize++;
+                                ConsoleHelper.SetCurrentFont("Consolas",(short)Config.fontSize);
+                                Config.SaveConfig();
                             }
-                            if (NativeKeyboard.IsKeyDown(37) && Controls.das > 1 && !prevFrameInputs[37])
+                            if (NativeKeyboard.IsKeyDown(37) && Config.fontSize > 5 && !prevFrameInputs[37])
                             {
-                                Controls.das--;
-                                Controls.SaveControls();
-                                Console.Clear();
+                                Config.fontSize--;
+                                ConsoleHelper.SetCurrentFont("Consolas",(short)Config.fontSize);
+                                Config.SaveConfig();
                             }
                             if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
                             {
@@ -112,19 +114,19 @@ namespace Menu
                                 break;
                             }
                             break;
-                        #endregion
+                            #endregion
                         case 2:
-                            #region ARR
-                            if (NativeKeyboard.IsKeyDown(39) && Controls.arr < 15 && !prevFrameInputs[39])
+                            #region DAS
+                            if (NativeKeyboard.IsKeyDown(39) && Config.das < 20 && !prevFrameInputs[39])
                             {
-                                Controls.arr++;
-                                Controls.SaveControls();
+                                Config.das++;
+                                Config.SaveConfig();
                                 Console.Clear();
                             }
-                            if (NativeKeyboard.IsKeyDown(37) && Controls.arr > 0 && !prevFrameInputs[37])
+                            if (NativeKeyboard.IsKeyDown(37) && Config.das > 1 && !prevFrameInputs[37])
                             {
-                                Controls.arr--;
-                                Controls.SaveControls();
+                                Config.das--;
+                                Config.SaveConfig();
                                 Console.Clear();
                             }
                             if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
@@ -140,17 +142,17 @@ namespace Menu
                             break;
                         #endregion
                         case 3:
-                            #region Sonic Drop
-                            if (NativeKeyboard.IsKeyDown(39) && !prevFrameInputs[39])
+                            #region ARR
+                            if (NativeKeyboard.IsKeyDown(39) && Config.arr < 15 && !prevFrameInputs[39])
                             {
-                                Controls.useSonicDrop = !Controls.useSonicDrop;
-                                Controls.SaveControls();
+                                Config.arr++;
+                                Config.SaveConfig();
                                 Console.Clear();
                             }
-                            if (NativeKeyboard.IsKeyDown(37) && !prevFrameInputs[37])
+                            if (NativeKeyboard.IsKeyDown(37) && Config.arr > 0 && !prevFrameInputs[37])
                             {
-                                Controls.useSonicDrop = !Controls.useSonicDrop;
-                                Controls.SaveControls();
+                                Config.arr--;
+                                Config.SaveConfig();
                                 Console.Clear();
                             }
                             if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
@@ -166,6 +168,32 @@ namespace Menu
                             break;
                         #endregion
                         case 4:
+                            #region Sonic Drop
+                            if (NativeKeyboard.IsKeyDown(39) && !prevFrameInputs[39])
+                            {
+                                Config.useSonicDrop = !Config.useSonicDrop;
+                                Config.SaveConfig();
+                                Console.Clear();
+                            }
+                            if (NativeKeyboard.IsKeyDown(37) && !prevFrameInputs[37])
+                            {
+                                Config.useSonicDrop = !Config.useSonicDrop;
+                                Config.SaveConfig();
+                                Console.Clear();
+                            }
+                            if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                            {
+                                cursorPos++;
+                                break;
+                            }
+                            if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
+                            {
+                                cursorPos--;
+                                break;
+                            }
+                            break;
+                        #endregion
+                        case 5:
                             #region Left
                             if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
                             {
@@ -189,14 +217,14 @@ namespace Menu
                                 }
                                 if (key.Key != ConsoleKey.Escape)
                                 {
-                                    Controls.left = (int)key.Key;
-                                    Controls.SaveControls();
+                                    Config.left = (int)key.Key;
+                                    Config.SaveConfig();
                                 }
                                 Console.Clear();
                             }
                             break;
                         #endregion
-                        case 5:
+                        case 6:
                             #region Right
                             if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
                             {
@@ -220,14 +248,14 @@ namespace Menu
                                 }
                                 if (key.Key != ConsoleKey.Escape)
                                 {
-                                    Controls.right = (int)key.Key;
-                                    Controls.SaveControls();
+                                    Config.right = (int)key.Key;
+                                    Config.SaveConfig();
                                 }
                                 Console.Clear();
                             }
                             break;
                         #endregion
-                        case 6:
+                        case 7:
                             #region Hard Drop
                             if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
                             {
@@ -251,14 +279,14 @@ namespace Menu
                                 }
                                 if (key.Key != ConsoleKey.Escape)
                                 {
-                                    Controls.hardDrop = (int)key.Key;
-                                    Controls.SaveControls();
+                                    Config.hardDrop = (int)key.Key;
+                                    Config.SaveConfig();
                                 }
                                 Console.Clear();
                             }
                             break;
                         #endregion
-                        case 7:
+                        case 8:
                             #region Soft Drop
                             if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
                             {
@@ -282,14 +310,14 @@ namespace Menu
                                 }
                                 if (key.Key != ConsoleKey.Escape)
                                 {
-                                    Controls.softDrop = (int)key.Key;
-                                    Controls.SaveControls();
+                                    Config.softDrop = (int)key.Key;
+                                    Config.SaveConfig();
                                 }
                                 Console.Clear();
                             }
                             break;
                         #endregion
-                        case 8:
+                        case 9:
                             #region Rot cw
                             if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
                             {
@@ -313,14 +341,14 @@ namespace Menu
                                 }
                                 if (key.Key != ConsoleKey.Escape)
                                 {
-                                    Controls.rotCw = (int)key.Key;
-                                    Controls.SaveControls();
+                                    Config.rotCw = (int)key.Key;
+                                    Config.SaveConfig();
                                 }
                                 Console.Clear();
                             }
                             break;
                         #endregion
-                        case 9:
+                        case 10:
                             #region Rot ccw
                             if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
                             {
@@ -344,14 +372,14 @@ namespace Menu
                                 }
                                 if (key.Key != ConsoleKey.Escape)
                                 {
-                                    Controls.rotCcw = (int)key.Key;
-                                    Controls.SaveControls();
+                                    Config.rotCcw = (int)key.Key;
+                                    Config.SaveConfig();
                                 }
                                 Console.Clear();
                             }
                             break;
                         #endregion
-                        case 10:
+                        case 11:
                             #region Rot 180
                             if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
                             {
@@ -375,14 +403,14 @@ namespace Menu
                                 }
                                 if (key.Key != ConsoleKey.Escape)
                                 {
-                                    Controls.rot180 = (int)key.Key;
-                                    Controls.SaveControls();
+                                    Config.rot180 = (int)key.Key;
+                                    Config.SaveConfig();
                                 }
                                 Console.Clear();
                             }
                             break;
                         #endregion
-                        case 11:
+                        case 12:
                             #region Hold
                             if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
                             {
@@ -406,14 +434,14 @@ namespace Menu
                                 }
                                 if (key.Key != ConsoleKey.Escape)
                                 {
-                                    Controls.rot180 = (int)key.Key;
-                                    Controls.SaveControls();
+                                    Config.rot180 = (int)key.Key;
+                                    Config.SaveConfig();
                                 }
                                 Console.Clear();
                             }
                             break;
                         #endregion
-                        case 12:
+                        case 13:
                             #region Credits
                             if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
                             {
