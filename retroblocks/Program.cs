@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.IO;
 using System.Linq;
 using System.Media;
+using System.Diagnostics;
 
 namespace Game
 {
@@ -51,7 +52,7 @@ namespace Game
             CurrentPiece.UpdateGravity();
             CurrentPiece.UpdateLines();
             HoldPiece.Setup();
-            Drawer.Setup();
+            Drawer.Setup(true);
             CurrentPiece.Spawn();
             #endregion
             #region Run game
@@ -71,7 +72,10 @@ namespace Game
             while (true)
             {
                 Drawer.DrawToConsole();
-                framesThisSecond++;
+                if (!paused)
+                {
+                    framesThisSecond++;
+                }
                 Console.CursorVisible = false;
             }
             #endregion
@@ -147,6 +151,27 @@ namespace Game
             }
         }
         #endregion
+        #region Application focus checker
+        /// <summary>Returns true if the current application has focus, false otherwise</summary>
+        public static bool IsApplicationFocused()
+        {
+            var activatedHandle = GetForegroundWindow();
+            if (activatedHandle == IntPtr.Zero)
+            {
+                return false;       // No window is currently activated
+            }
+
+            var procId = Process.GetCurrentProcess().Id;
+            int activeProcId;
+            GetWindowThreadProcessId(activatedHandle, out activeProcId);
+
+            return activeProcId == procId;
+        }
+        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
+        private static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
+        #endregion
     }
     public static class Matrix
     {
@@ -188,9 +213,9 @@ namespace Game
         {
             get
             {
-                for(int y = 0; y < 40; y++)
+                for (int y = 0; y < 40; y++)
                 {
-                    for(int x = 0; x < 10; x++)
+                    for (int x = 0; x < 10; x++)
                     {
                         if (y == 0)
                         {
@@ -205,7 +230,7 @@ namespace Game
                         }
                     }
                 }
-                if(areTimer > -1 || lineAreTimer > -1)
+                if (areTimer > -1 || lineAreTimer > -1)
                 {
                     return true;
                 }
@@ -366,7 +391,7 @@ namespace Game
         public static void MovePiece(object o, ElapsedEventArgs _)
         {
             // Left
-            if (NativeKeyboard.IsKeyDown(Config.left))
+            if (NativeKeyboard.IsKeyDown(Config.left) && Program.paused == false)
             {
                 leftDasTimer++;
                 if (areTimer < 0)
@@ -378,10 +403,10 @@ namespace Game
                     }
                 }
             }
-            else { leftDasTimer = 0; }
+            else if (Program.paused == false) { leftDasTimer = 0; }
 
             // Right
-            if (NativeKeyboard.IsKeyDown(Config.right))
+            if (NativeKeyboard.IsKeyDown(Config.right) && Program.paused == false)
             {
                 rightDasTimer++;
                 if (!Config.prevFramePresses[1])
@@ -390,32 +415,47 @@ namespace Game
                     Right();
                 }
             }
-            else { rightDasTimer = 0; }
+            else if (Program.paused == false) { rightDasTimer = 0; }
 
             // Hard drop
-            if (NativeKeyboard.IsKeyDown(Config.hardDrop) && !Config.prevFramePresses[2] && areTimer == -1)
+            if (NativeKeyboard.IsKeyDown(Config.hardDrop) && !Config.prevFramePresses[2] && areTimer == -1 && Program.paused == false)
             {
                 LockPiece(null, null);
             }
 
             // Soft drop
-            if (NativeKeyboard.IsKeyDown(Config.softDrop) && landed == false)
+            if (NativeKeyboard.IsKeyDown(Config.softDrop) && landed == false && Program.paused == false)
             {
                 Fall(null, null);
                 score += 1;
-                while(!landed && Config.useSonicDrop && areTimer == -1)
+                while (!landed && Config.useSonicDrop && areTimer == -1)
                 {
                     Fall(null, null);
                     score += 1;
                 }
             }
 
-            Config.SaveFramePresses1();
+            #region Pause
+            if (Program.paused == false)
+            {
+                Config.SaveFramePresses1();
+            }
+            bool p = NativeKeyboard.IsKeyDown(Config.pause);
+            if (p && Config.prevFramePresses[8] == false)
+            {
+                Program.paused = !Program.paused;
+                Config.prevFramePresses[8] = true;
+            }
+            else if ((!p) && Config.prevFramePresses[8] == true)
+            {
+                Config.prevFramePresses[8] = false;
+            }
+            #endregion
         }
         public static void SpinPiece(object o, ElapsedEventArgs _)
         {
             // Clockwise
-            if (NativeKeyboard.IsKeyDown(Config.rotCw) && !Config.prevFramePresses[4] && areTimer == -1)
+            if (NativeKeyboard.IsKeyDown(Config.rotCw) && !Config.prevFramePresses[4] && areTimer == -1 && Program.paused == false)
             {
                 if (rotated || rotState == 0 || triedCw)
                 {
@@ -428,7 +468,7 @@ namespace Game
             }
 
             // Counterclockwise
-            if (NativeKeyboard.IsKeyDown(Config.rotCcw) && !Config.prevFramePresses[5] && areTimer == -1)
+            if (NativeKeyboard.IsKeyDown(Config.rotCcw) && !Config.prevFramePresses[5] && areTimer == -1 && Program.paused == false)
             {
                 if (rotated || rotState == 0 || triedCcw)
                 {
@@ -441,7 +481,7 @@ namespace Game
             }
 
             // 180 rotation
-            if (NativeKeyboard.IsKeyDown(Config.rot180) && !Config.prevFramePresses[6])
+            if (NativeKeyboard.IsKeyDown(Config.rot180) && !Config.prevFramePresses[6] && areTimer == -1 && Program.paused == false)
             {
                 if (rotated || rotState == 0 || tried180)
                 {
@@ -454,12 +494,15 @@ namespace Game
             }
 
             // Hold
-            if (NativeKeyboard.IsKeyDown(Config.hold) && !Config.prevFramePresses[7] && areTimer < 0)
+            if (NativeKeyboard.IsKeyDown(Config.hold) && !Config.prevFramePresses[7] && areTimer < 0 && Program.paused == false)
             {
                 Hold();
             }
 
-            Config.SaveFramePresses2();
+            if (Program.paused == false)
+            {
+                Config.SaveFramePresses2();
+            }
         }
         public static void DasPiece(object o, ElapsedEventArgs _)
         {
@@ -557,9 +600,9 @@ namespace Game
         }
         public static void Fall(object o, ElapsedEventArgs _)
         {
-            if(!landed)
+            if (!landed)
             {
-                bool[][] newState = new bool[10][]  
+                bool[][] newState = new bool[10][]
                 {
                     new bool[40],
                     new bool[40],
@@ -572,9 +615,9 @@ namespace Game
                     new bool[40],
                     new bool[40],
                 };
-                for(int y = 0; y < 39; y++)
+                for (int y = 0; y < 39; y++)
                 {
-                    for(int x = 0; x < 10; x++)
+                    for (int x = 0; x < 10; x++)
                     {
                         newState[x][y] = state[x][y + 1];
                     }
@@ -586,16 +629,16 @@ namespace Game
         public static void LockPiece(object o, ElapsedEventArgs _)
         {
             HoldPiece.used = false;
-            for(int i = 0; i < 40 && !landed; i++)
+            for (int i = 0; i < 40 && !landed; i++)
             {
                 Fall(null, null);
                 score += 2;
             }
-            for(int y = 0; y < 40; y++)
+            for (int y = 0; y < 40; y++)
             {
-                for(int x = 0; x < 10; x++)
+                for (int x = 0; x < 10; x++)
                 {
-                    if(state[x][y])
+                    if (state[x][y])
                     {
                         Matrix.state[x][y] = true;
                         state[x][y] = false;
@@ -603,17 +646,17 @@ namespace Game
                 }
             }
             int linesCleared = 0;
-            for(int y = 0; y < 40; y++)
+            for (int y = 0; y < 40; y++)
             {
-                if(
-                    #region Check for line
+                if (
+                #region Check for line
                     Matrix.state[0][y] && Matrix.state[1][y] && Matrix.state[2][y] && Matrix.state[3][y] && Matrix.state[4][y] && Matrix.state[5][y] && Matrix.state[6][y] && Matrix.state[7][y] && Matrix.state[8][y] && Matrix.state[9][y]
                 #endregion
                     )
                 {
                     linesCleared++;
                     lined[y] = true;
-                    for(int e = 0; e < 10; e++)
+                    for (int e = 0; e < 10; e++)
                     {
                         Matrix.state[e][y] = false;
                     }
@@ -672,7 +715,7 @@ namespace Game
                 default:
                     throw new ArgumentOutOfRangeException("5+ line clear!");
             }
-            if(combo > 0)
+            if (combo > 0)
             {
                 score += combo * levelNum;
             }
@@ -681,7 +724,7 @@ namespace Game
         }
         public static void Spawn()
         {
-            state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], }; 
+            state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], };
             xoffset = 2;
             yoffset = 19;
             rotated = false;
@@ -689,12 +732,12 @@ namespace Game
             triedCcw = false;
             tried180 = false;
             if (NativeKeyboard.IsKeyDown(Config.rotCcw)) { rotState = 3; }
-       else if (NativeKeyboard.IsKeyDown(Config.rot180)) { rotState = 2; }
-       else if (NativeKeyboard.IsKeyDown(Config.rotCw )) { rotState = 1; }
-       else                                              { rotState = 0; }
-            for(int x = 0; x < 5; x++)
+            else if (NativeKeyboard.IsKeyDown(Config.rot180)) { rotState = 2; }
+            else if (NativeKeyboard.IsKeyDown(Config.rotCw)) { rotState = 1; }
+            else { rotState = 0; }
+            for (int x = 0; x < 5; x++)
             {
-                for(int y = 0; y < 5; y++)
+                for (int y = 0; y < 5; y++)
                 {
                     state[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum]).piece[rotState][y][x];
                 }
@@ -708,7 +751,7 @@ namespace Game
                     nextPieceSpawn[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum]).piece[0][y][x];
                 }
             }
-            if(NativeKeyboard.IsKeyDown(Config.hold)) { Hold(); }
+            if (NativeKeyboard.IsKeyDown(Config.hold)) { Hold(); }
             lockDelayResets = 0;
 
             if (NativeKeyboard.IsKeyDown(Config.hardDrop) && !Config.prevFramePresses[2]) { LockPiece(null, null); }
@@ -717,7 +760,7 @@ namespace Game
         }
         public static void Left()
         {
-            if(Array.IndexOf(state[0], true) == -1)
+            if (Array.IndexOf(state[0], true) == -1)
             {
                 bool[][] shifted = new bool[10][]
                     {
@@ -733,11 +776,11 @@ namespace Game
                         new bool[40],
                     };
 
-                for(int x = 0; x < 10; x++)
+                for (int x = 0; x < 10; x++)
                 {
-                    for(int y = 0; y < 40; y++)
+                    for (int y = 0; y < 40; y++)
                     {
-                        if(x == 9)
+                        if (x == 9)
                         {
                             shifted[x][y] = false;
                         }
@@ -745,7 +788,7 @@ namespace Game
                         {
                             shifted[x][y] = state[x + 1][y];
                         }
-                        if(shifted[x][y] && Matrix.state[x][y])
+                        if (shifted[x][y] && Matrix.state[x][y])
                         {
                             return;
                         }
@@ -757,7 +800,7 @@ namespace Game
                 {
                     ResetLockDelay();
                 }
-                if(areTimer < 0)
+                if (areTimer < 0)
                 {
                     UpdateGhost();
                 }
@@ -805,7 +848,7 @@ namespace Game
                 {
                     ResetLockDelay();
                 }
-                if(areTimer < 0)
+                if (areTimer < 0)
                 {
                     UpdateGhost();
                 }
@@ -830,8 +873,8 @@ namespace Game
             bool failed = false;
             Piece p = Piece.GetPiece(piece);
             bool[][] m = Matrix.state;
-            Vector2D kickUsed = new Vector2D(0,0);
-            for(int i = 0; i < p.cwKicks[0].Length; i++)
+            Vector2D kickUsed = new Vector2D(0, 0);
+            for (int i = 0; i < p.cwKicks[0].Length; i++)
             {
                 kickUsed = p.cwKicks[rotState][i];
                 for (int x = 0; x < 5; x++)
@@ -841,10 +884,10 @@ namespace Game
                         if (p.piece[(rotState + 1) % 4][-y + 4][x])
                         {
                             // Detect overlap with wall, floor, ceiling or other minos
-                            if (x + xoffset + p.cwKicks[rotState][i].x < 0 
-                            || x + xoffset + p.cwKicks[rotState][i].x > 9 
-                            || y + yoffset + p.cwKicks[rotState][i].y < 0 
-                            || y + yoffset + p.cwKicks[rotState][i].y > 40 
+                            if (x + xoffset + p.cwKicks[rotState][i].x < 0
+                            || x + xoffset + p.cwKicks[rotState][i].x > 9
+                            || y + yoffset + p.cwKicks[rotState][i].y < 0
+                            || y + yoffset + p.cwKicks[rotState][i].y > 40
                             || m[x + xoffset + p.cwKicks[rotState][i].x][y + yoffset + p.cwKicks[rotState][i].y])
                             {
                                 failed = true;
@@ -914,10 +957,10 @@ namespace Game
                         if (p.piece[(rotState + 3) % 4][-y + 4][x])
                         {
                             // Detect overlap with wall, floor, ceiling or other minos
-                            if (x + xoffset + p.ccwKicks[rotState][i].x < 0 
-                                || x + xoffset + p.ccwKicks[rotState][i].x > 9 
-                                || y + yoffset + p.ccwKicks[rotState][i].y < 0 
-                                || y + yoffset + p.ccwKicks[rotState][i].y > 40 
+                            if (x + xoffset + p.ccwKicks[rotState][i].x < 0
+                                || x + xoffset + p.ccwKicks[rotState][i].x > 9
+                                || y + yoffset + p.ccwKicks[rotState][i].y < 0
+                                || y + yoffset + p.ccwKicks[rotState][i].y > 40
                                 || m[x + xoffset + p.ccwKicks[rotState][i].x][y + yoffset + p.ccwKicks[rotState][i].y])
                             {
                                 failed = true;
@@ -1087,11 +1130,11 @@ namespace Game
         /// <returns></returns>
         public static Piece GetFuturePiece(int intoFuture)
         {
-            if(intoFuture < 0 || intoFuture > 7)
+            if (intoFuture < 0 || intoFuture > 7)
             {
                 throw new ArgumentOutOfRangeException(intoFuture < 0 ? $"Minimum value is 1, got {intoFuture}" : $"Maximum value is 7, got {intoFuture}");
             }
-            if(piecenum + intoFuture > 6)
+            if (piecenum + intoFuture > 6)
             {
                 return Piece.GetPiece(BagRandomizer.output[BagRandomizer.next][piecenum + intoFuture - 7]);
             }
@@ -1102,7 +1145,7 @@ namespace Game
         }
         public static void ResetLockDelay()
         {
-            if(landed && lockDelayResets < 30 && areTimer < 0 && lineAreTimer < 0)
+            if (landed && lockDelayResets < 30 && areTimer < 0 && lineAreTimer < 0)
             {
                 lockDelayTimer = 0;
                 lockDelayResets++;
@@ -1110,9 +1153,9 @@ namespace Game
         }
         public static void UpdateGhost()
         {
-            for(int y = 0; y < 40; y++)
+            for (int y = 0; y < 40; y++)
             {
-                for(int x = 0; x < 10; x++)
+                for (int x = 0; x < 10; x++)
                 {
                     ghost[x][y] = state[x][y];
                 }
@@ -1161,7 +1204,7 @@ namespace Game
             {
                 string[] ycache = new string[24];
                 string xcache = "";
-                for(int y = 0; y < 24; y++)
+                for (int y = 0; y < 24; y++)
                 {
                     for (int x = 0; x < 10; x++)
                     {
@@ -1171,7 +1214,7 @@ namespace Game
                         }
                         else if (CurrentPiece.state[x][y])
                         {
-                            if(CurrentPiece.lockDelayTimer < 0.25 * CurrentPiece.level.lockDelay)
+                            if (CurrentPiece.lockDelayTimer < 0.25 * CurrentPiece.level.lockDelay)
                             {
                                 xcache += "[]";
                             }
@@ -1207,11 +1250,8 @@ namespace Game
                 return ycache;
             }
         }
-        public static void Setup(object o, ElapsedEventArgs _)
-        {
-            Setup();
-        }
-        public static void Setup()
+        private static bool prevFramePauseState = false;
+        public static void Setup(bool doStartAnimation)
         {
             Console.SetCursorPosition(0, 0);
             Console.ForegroundColor = ConsoleColor.Green;
@@ -1240,166 +1280,170 @@ namespace Game
   /*21*/         $"            |                    |\n" +
   /*22*/         $"            |                    |\n" +
   /*23*/         $"            |                    |\n"
-              //   0123456789012345678901234567890123456
-              //   0         10        20        30
+                //   0123456789012345678901234567890123456
+                //   0         10        20        30
                 );
             Console.ForegroundColor = ConsoleColor.Red;
-            for(int i = 0; i < 4; i++)
+            for (int i = 0; i < 4; i++)
             {
                 Console.SetCursorPosition(12, i);
                 Console.Write("|                    |");
             }
             DrawToConsole();
             #region Starting Animation
-            System.Threading.Thread.Sleep(750);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("-       -");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("--     --");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("---   ---");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("---- ----");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("---------");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("---------");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("---------");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("----■----");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("---<■>---");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("---[■]---");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("--<[■]>--");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("--<[A]>--");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("-<[ A ]>-");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("<[E A D]>");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("[ E A D ]");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("R E A D Y");
-            System.Threading.Thread.Sleep(760);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("[ E A D ]");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("<[E A D]>");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("-<[ A ]>-");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("--<[A]>--");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("--<[■]>--");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("---<■>---");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("----■----");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("---------");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write(" ------- ");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("  -----  ");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("   ---   ");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("   G-O   ");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("   G O   ");
-            System.Threading.Thread.Sleep(840);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("-  G O  -");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("-- G O --");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("---G O---");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("--<G O>--");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("--[G O]--");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("-<[G O]>-");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("--<[■]>--");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("---<■>---");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("----■----");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("---------");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write(" ------- ");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("  -----  ");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("   ---   ");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("    -    ");
-            System.Threading.Thread.Sleep(20);
-            Console.SetCursorPosition(18, 12);
-            Console.Write("         ");
+            if (doStartAnimation)
+            {
+
+                System.Threading.Thread.Sleep(750);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("-       -");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("--     --");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("---   ---");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("---- ----");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("---------");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("---------");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("---------");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("----■----");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("---<■>---");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("---[■]---");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("--<[■]>--");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("--<[A]>--");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("-<[ A ]>-");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("<[E A D]>");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("[ E A D ]");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("R E A D Y");
+                System.Threading.Thread.Sleep(760);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("[ E A D ]");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("<[E A D]>");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("-<[ A ]>-");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("--<[A]>--");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("--<[■]>--");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("---<■>---");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("----■----");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("---------");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write(" ------- ");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("  -----  ");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("   ---   ");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("   G-O   ");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("   G O   ");
+                System.Threading.Thread.Sleep(840);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("-  G O  -");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("-- G O --");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("---G O---");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("--<G O>--");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("--[G O]--");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("-<[G O]>-");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("--<[■]>--");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("---<■>---");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("----■----");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("---------");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write(" ------- ");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("  -----  ");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("   ---   ");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("    -    ");
+                System.Threading.Thread.Sleep(20);
+                Console.SetCursorPosition(18, 12);
+                Console.Write("         ");
+            }
             #endregion
         }
         public static void DrawToConsole()
         {
             Console.SetCursorPosition(0, 0);
-            if (!Program.paused)
+            if (!Program.paused && !prevFramePauseState)
             {
                 #region Color
                 string[] Picture = Drawer.Picture;
-                for(int i = 0, j = 23; i < 24; i++, j--)
+                for (int i = 0, j = 23; i < 24; i++, j--)
                 {
                     Console.SetCursorPosition(13, i);
                     if (j == 23)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
                     }
-                    else if(j == 19)
+                    else if (j == 19)
                     {
                         Console.ForegroundColor = ConsoleColor.Green;
                     }
@@ -1411,12 +1455,21 @@ namespace Game
                 DrawProgressBar();
                 DrawStats();
             }
-            else
+            else if (!prevFramePauseState)
             {
+                Console.Clear();
+                Console.SetCursorPosition(0, 0);
                 Console.Write($"[ ==========PAUSED========== ]\n" +
-                    $"Press Esc to unpause\n" + 
+                    $"Press Esc to unpause\n" +
                     $"Press R to restart\n"
                     );
+                prevFramePauseState = true;
+            }
+            else if(!Program.paused)
+            {
+                Console.Clear();
+                prevFramePauseState = false;
+                Setup(false);
             }
         }
         private static void DrawHoldPiece()
@@ -1481,9 +1534,9 @@ namespace Game
             //      : --> line are
 
             Console.SetCursorPosition(12, 24);
-            double p = !CurrentPiece.landed && CurrentPiece.level.g < 0.5 ? -CurrentPiece.leftoverG - 0.07: CurrentPiece.areTimer == -1 ? -(double)CurrentPiece.lockDelayTimer / CurrentPiece.level.lockDelay : CurrentPiece.lineAreTimer == -1 ? (double)CurrentPiece.areTimer / -CurrentPiece.level.are : -(double)CurrentPiece.lineAreTimer / CurrentPiece.level.lineAre;
+            double p = !CurrentPiece.landed && CurrentPiece.level.g < 0.5 ? -CurrentPiece.leftoverG - 0.07 : CurrentPiece.areTimer == -1 ? -(double)CurrentPiece.lockDelayTimer / CurrentPiece.level.lockDelay : CurrentPiece.lineAreTimer == -1 ? (double)CurrentPiece.areTimer / -CurrentPiece.level.are : -(double)CurrentPiece.lineAreTimer / CurrentPiece.level.lineAre;
             int e = (int)(p * 22) + 22;
-            if(!CurrentPiece.landed && CurrentPiece.level.g < 0.5 && CurrentPiece.areTimer == -1)
+            if (!CurrentPiece.landed && CurrentPiece.level.g < 0.5 && CurrentPiece.areTimer == -1)
             {
                 for (int i = 0; i < 22; i++)
                 {
@@ -1626,7 +1679,7 @@ namespace Game
         private static string GetMinos(bool[] minoTypes)
         {
             string _ = "";
-            for(int i = 0; i < minoTypes.Length; i++)
+            for (int i = 0; i < minoTypes.Length; i++)
             {
                 _ += minoTypes[i] ? "[]" : "  ";
             }
@@ -2373,12 +2426,12 @@ namespace Game
         #endregion
         public static int fontSize;
         /// <summary>
-        /// Previous frame presses. Index (0 - 7): L, R, HD, SD, CW, CCW, 180, Hold
+        /// Previous frame presses. Index (0 - 8 inclusively): L, R, HD, SD, CW, CCW, 180, Hold, Pause
         /// </summary>
         public static bool[] prevFramePresses;
         public static void Setup()
         {
-            prevFramePresses = new bool[8];
+            prevFramePresses = new bool[9];
         }
         public static void SaveFramePresses1()
         {
