@@ -43,7 +43,7 @@ namespace Menu
                         $"===================\n\n" +
                         $"{(cursorPos == 0 ? "> " : "  ")}Start!\n\n" +
                         $"Settings: \n" +
-                        $"{(cursorPos == 1 ? "> " : "  ")}Font Size: {Config.fontSize} - Default: 10\n\n" +
+                        $"{(cursorPos == 1 ? "> " : "  ")}Font Size: {Config.fontSize} - Default: 17\n\n" +
                         $"Handling: \n" +
                         $"{(cursorPos == 2 ? "> " : "  ")}DAS: {Config.das} - Default: 10\n" +
                         $"{(cursorPos == 3 ? "> " : "  ")}ARR: {Config.arr} - Default: 1\n" +

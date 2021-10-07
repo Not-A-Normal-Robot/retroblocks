@@ -3,4 +3,4 @@
 **Warning: This project is currently in alpha. Expect bugs and missing features!**
 
 # Running
-Download this repo. The exe is located in /retroblocks/bin/Debug/netcoreapp3.1
+Download this repo. The exe is located in /retroblocks/build/[platform]

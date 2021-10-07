@@ -1,0 +1,2 @@
+C:\retroblocks\retroblocks\build\win-x86\retroblocks.pdb
+C:\retroblocks\retroblocks\build\win-x86\retroblocks.exe

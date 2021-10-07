@@ -189,19 +189,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Cesium\\.nuget\\packages\\": {}
+    "C:\\Users\\ADJIE\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\retroblocks\\retroblocks\\retroblocks.csproj",
+      "projectUniqueName": "C:\\retroblocks\\retroblocks\\retroblocks.csproj",
       "projectName": "retroblocks",
-      "projectPath": "D:\\retroblocks\\retroblocks\\retroblocks.csproj",
-      "packagesPath": "C:\\Users\\Cesium\\.nuget\\packages\\",
-      "outputPath": "D:\\retroblocks\\retroblocks\\obj\\",
+      "projectPath": "C:\\retroblocks\\retroblocks\\retroblocks.csproj",
+      "packagesPath": "C:\\Users\\ADJIE\\.nuget\\packages\\",
+      "outputPath": "C:\\retroblocks\\retroblocks\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Cesium\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\ADJIE\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -247,7 +247,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.207\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.401\\RuntimeIdentifierGraph.json"
       }
     }
   }

@@ -15,9 +15,13 @@ namespace Game
         private static Timer frameTimer;
         private static Timer secondTimer;
         public static string mode;
+        public static bool firstRun = true;
         public static int tps { get; private set; }
         public static int fps { get; private set; }
         private static int framesThisSecond;
+        public static bool toppedOut;
+        private static bool clearedConsole = false;
+        private static int ranking;
         static void Main()
         {
             #region Setup console
@@ -32,53 +36,132 @@ namespace Game
             Console.SetBufferSize(50, 32);
             DisableResize();
             #endregion
-            #region Main Menu
-            Sounds.Setup();
-            Menu.Main.Start();
-            Console.Clear();
-            tps = 0;
-            fps = 0;
-            framesThisSecond = 0;
-            #endregion
-            #region Setup game
-            // Console.SetBufferSize(48, 30);
-            // Console.SetWindowSize(48, 30);
-            Levels.Setup();
-            Piece.Setup();
-            BagRandomizer.Setup();
-            Matrix.Setup();
-            CurrentPiece.Setup();
-            CurrentPiece.UpdateTimers();
-            CurrentPiece.UpdateGravity();
-            CurrentPiece.UpdateLines();
-            HoldPiece.Setup();
-            Drawer.Setup(true);
-            CurrentPiece.Spawn();
-            #endregion
-            #region Run game
-            frameTimer = new Timer(16);
-            frameTimer.Elapsed += CurrentPiece.UpdateTimers;
-            frameTimer.Elapsed += CurrentPiece.UpdateGravity;
-            frameTimer.Elapsed += CurrentPiece.UpdateLines;
-            frameTimer.Elapsed += CurrentPiece.MovePiece;
-            frameTimer.Elapsed += CurrentPiece.SpinPiece;
-            frameTimer.Elapsed += CurrentPiece.DasPiece;
-            frameTimer.AutoReset = true;
-            frameTimer.Enabled = true;
-            secondTimer = new Timer(1000);
-            secondTimer.Elapsed += UpdateCounters;
-            secondTimer.AutoReset = true;
-            secondTimer.Enabled = true;
             while (true)
             {
-                Drawer.DrawToConsole();
-                if (!paused)
+                #region Main Menu
+                Sounds.Setup();
+                Menu.Main.Start();
+                Console.Clear();
+                tps = 0;
+                fps = 0;
+                framesThisSecond = 0;
+                #endregion
+
+                while (true)
                 {
-                    framesThisSecond++;
+                    #region Setup game
+                    paused = false;
+                    Levels.Setup();
+                    Piece.Setup();
+                    BagRandomizer.Setup();
+                    Matrix.Setup();
+                    CurrentPiece.Setup();
+                    HoldPiece.Setup();
+                    Drawer.Setup(true);
+                    CurrentPiece.Spawn();
+                    #endregion
+                    #region Run game
+
+                    if (firstRun)
+                    {
+                        frameTimer = new Timer(16);
+                        frameTimer.Elapsed += CurrentPiece.UpdateTimers;
+                        frameTimer.Elapsed += CurrentPiece.UpdateGravity;
+                        frameTimer.Elapsed += CurrentPiece.UpdateLines;
+                        frameTimer.Elapsed += CurrentPiece.MovePiece;
+                        frameTimer.Elapsed += CurrentPiece.SpinPiece;
+                        frameTimer.Elapsed += CurrentPiece.DasPiece;
+                        frameTimer.AutoReset = true;
+                        frameTimer.Enabled = true;
+                        secondTimer = new Timer(1000);
+                        secondTimer.Elapsed += UpdateCounters;
+                        secondTimer.AutoReset = true;
+                        secondTimer.Enabled = true;
+                    }
+                    frameTimer.Enabled = true;
+                    while (true)
+                    {
+                        
+                        Console.CursorVisible = false;
+                        if (!toppedOut)
+                        {
+                            if (!paused)
+                            {
+                                framesThisSecond++;
+                            }
+                            Drawer.DrawToConsole();
+                            if (frameTimer.Enabled == paused) { frameTimer.Enabled = !paused; }
+                            bool p = NativeKeyboard.IsKeyDown(Config.pause);
+                            if (p && Config.prevFramePresses[8] == false)
+                            {
+                                paused = !paused;
+                                Config.prevFramePresses[8] = true;
+                            }
+                            else if ((!p) && Config.prevFramePresses[8] == true)
+                            {
+                                Config.prevFramePresses[8] = false;
+                            }
+
+                            if (NativeKeyboard.IsKeyDown(Config.retry))
+                            {
+                                firstRun = false;
+                                HighScores.SaveScore(CurrentPiece.score);
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            if (!clearedConsole)
+                            {
+                                Console.Clear();
+                                clearedConsole = true;
+                                ranking = HighScores.SaveScore(CurrentPiece.score);
+                            }
+                            frameTimer.Enabled = false;
+                            System.Threading.Thread.Sleep(20);
+                            Console.SetCursorPosition(0, 0);
+                            Console.Write(
+                                $"TOP OUT\n" +
+                                $"\n" +
+                                $"Score: {CurrentPiece.score}\n" +
+                                $"Ranking: {ranking}\n" +
+                                $"\n" +
+                                $"\n" +
+                                $"Lines: {CurrentPiece.lines}\n" +
+                                $"Level: {CurrentPiece.levelNum}\n" +
+                                $"{CurrentPiece.level.g}G {CurrentPiece.level.lockDelay}LD\n" +
+                                $"{CurrentPiece.level.invisibleTimer} invTimer\n" +
+                                $"{Config.das} --> {CurrentPiece.level.das} DAS\n" +
+                                $"{Config.arr} --> {CurrentPiece.level.arr} ARR\n" +
+                                $"\n" +
+                                $"\n" +
+                                $"- Press R to retry\n" +
+                                $"- Press Esc to return to main menu"
+                                );
+                            if (NativeKeyboard.IsKeyDown(Config.retry))
+                            {
+                                Console.Clear();
+                                toppedOut = false;
+                                clearedConsole = false;
+                                break;
+                            }
+                            if (NativeKeyboard.IsKeyDown(Config.pause))
+                            {
+                                Console.Clear();
+                                clearedConsole = false;
+                                break;
+                            }
+                        }
+
+                    }
+                    if (toppedOut)
+                    {
+                        toppedOut = false;
+                        break;
+                    }
+                    #endregion
                 }
-                Console.CursorVisible = false;
             }
-            #endregion
         }
         static void UpdateCounters(object o, ElapsedEventArgs _)
         {
@@ -178,12 +261,18 @@ namespace Game
         public static bool[][] state; // board state = state[x][y]
         // 0x = left
         // 0y = bottom
+        /// <summary>
+        /// Each block increases by 1 every tick. Gets reset to 0 when block placed.
+        /// </summary>
+        public static int[][] invisTimer;
         public static void Setup()
         {
             state = new bool[10][];
+            invisTimer = new int[10][];
             for (int i = 0; i < state.Length; i++)
             {
                 state[i] = new bool[40];
+                invisTimer[i] = new int[40];
             }
         }
     }
@@ -243,7 +332,6 @@ namespace Game
         public static int lockDelayTimer;
         public static int lines;
         public static int lockDelayResets;
-        public static bool useSonicDrop;
         /// <summary>
         /// 0 = left mino of piece border is on left part of board. If positive, then left mino of piece border is on the right of left part of board. Can go negative.
         /// </summary>
@@ -266,6 +354,8 @@ namespace Game
         private static bool triedCw;
         private static bool triedCcw;
         private static bool tried180;
+        private static int spawnTries;
+        private static bool retryHold;
         public static int levelNum {
             get
             {
@@ -310,10 +400,16 @@ namespace Game
             }
             if (areTimer > level.are)
             {
-                areTimer = -1;
                 Spawn();
             }
             ticksThisSecond++;
+            for(int x = 0; x < Matrix.invisTimer.Length; x++)
+            {
+                for(int y = 0; y < Matrix.invisTimer[x].Length; y++)
+                {
+                    Matrix.invisTimer[x][y] += 1;
+                }
+            }
         }
         public static void UpdateGravity()
         {
@@ -354,10 +450,12 @@ namespace Game
                                 if (y == 39)
                                 {
                                     Matrix.state[x][y] = false;
+                                    Matrix.invisTimer[x][y] = 0;
                                 }
                                 else
                                 {
                                     Matrix.state[x][y - i] = Matrix.state[x][y + 1 - i];
+                                    Matrix.invisTimer[x][y - i] = Matrix.invisTimer[x][y + 1 - i];
                                 }
                             }
                         }
@@ -435,22 +533,7 @@ namespace Game
                 }
             }
 
-            #region Pause
-            if (Program.paused == false)
-            {
-                Config.SaveFramePresses1();
-            }
-            bool p = NativeKeyboard.IsKeyDown(Config.pause);
-            if (p && Config.prevFramePresses[8] == false)
-            {
-                Program.paused = !Program.paused;
-                Config.prevFramePresses[8] = true;
-            }
-            else if ((!p) && Config.prevFramePresses[8] == true)
-            {
-                Config.prevFramePresses[8] = false;
-            }
-            #endregion
+            Config.SaveFramePresses1();
         }
         public static void SpinPiece(object o, ElapsedEventArgs _)
         {
@@ -496,7 +579,11 @@ namespace Game
             // Hold
             if (NativeKeyboard.IsKeyDown(Config.hold) && !Config.prevFramePresses[7] && areTimer < 0 && Program.paused == false)
             {
-                Hold();
+                retryHold = !Hold();
+            }
+            else if (retryHold)
+            {
+                retryHold = !Hold();
             }
 
             if (Program.paused == false)
@@ -573,8 +660,10 @@ namespace Game
             lined = new bool[40];
             piece = BagRandomizer.output[BagRandomizer.current][0];
             piecenum = 0;
+            rotState = 0;
             leftDasTimer = Config.das;
             rightDasTimer = Config.das;
+            lockDelayTimer = 0;
             score = 0;
             leftoverG = 0d;
             areTimer = -1;
@@ -582,6 +671,15 @@ namespace Game
             ticksThisSecond = 0;
             Config.Setup();
             combo = -1;
+            lines = 0;
+            lockDelayResets = 0;
+            btb = false;
+            lastClear = "         ";
+            rotated = false;
+            triedCw = false;
+            triedCcw = false;
+            tried180 = false;
+            spawnTries = 0;
         }
         public static void NextPiece()
         {
@@ -642,6 +740,7 @@ namespace Game
                     {
                         Matrix.state[x][y] = true;
                         state[x][y] = false;
+                        Matrix.invisTimer[x][y] = 0;
                     }
                 }
             }
@@ -731,10 +830,7 @@ namespace Game
             triedCw = false;
             triedCcw = false;
             tried180 = false;
-            if (NativeKeyboard.IsKeyDown(Config.rotCcw)) { rotState = 3; }
-            else if (NativeKeyboard.IsKeyDown(Config.rot180)) { rotState = 2; }
-            else if (NativeKeyboard.IsKeyDown(Config.rotCw)) { rotState = 1; }
-            else { rotState = 0; }
+            rotState = 0;
             for (int x = 0; x < 5; x++)
             {
                 for (int y = 0; y < 5; y++)
@@ -742,7 +838,49 @@ namespace Game
                     state[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum]).piece[rotState][y][x];
                 }
             }
-            NextPiece();
+
+            if(spawnTries == 0)
+            {
+                NextPiece();
+            }
+            if (NativeKeyboard.IsKeyDown(Config.rotCcw)) { RotCCW(); Config.prevFramePresses[5] = true; }
+            if (NativeKeyboard.IsKeyDown(Config.rot180)) { Rot180(); Config.prevFramePresses[6] = true; }
+            if (NativeKeyboard.IsKeyDown(Config.rotCw)) { RotCW(); Config.prevFramePresses[4] = true; }
+
+
+            
+
+            for (int x = 0; x < 10; x++)
+            {
+                for (int y = 0; y < 40; y++)
+                {
+                    if (spawnTries >= 60)
+                    {
+                        Sounds.topOut.Play();
+                        Console.Clear();
+                        Program.toppedOut = true;
+                        return;
+                    }
+                    if (state[x][y] && Matrix.state[x][y])
+                    {
+                        state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], };
+                        spawnTries++;
+                        if (NativeKeyboard.IsKeyDown(Config.hold)) { if (Hold()) { areTimer = -1; } else { retryHold = true; spawnTries--; } }
+                        return;
+                    }
+                }
+                if(spawnTries >= 60)
+                {
+                    return;
+                }
+            }
+            if (spawnTries >= 60)
+            {
+                return;
+            }
+            spawnTries = 0;
+            areTimer = -1;
+
             UpdateGhost();
             for (int x = 0; x < 5; x++)
             {
@@ -751,12 +889,13 @@ namespace Game
                     nextPieceSpawn[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum]).piece[0][y][x];
                 }
             }
-            if (NativeKeyboard.IsKeyDown(Config.hold)) { Hold(); }
             lockDelayResets = 0;
 
+            if (NativeKeyboard.IsKeyDown(Config.hold)) { if (Hold()) { areTimer = -1; } else { retryHold = true; } }
             if (NativeKeyboard.IsKeyDown(Config.hardDrop) && !Config.prevFramePresses[2]) { LockPiece(null, null); }
             leftoverG = 0;
             lockDelayTimer = 0;
+
         }
         public static void Left()
         {
@@ -1073,7 +1212,11 @@ namespace Game
                 yoffset += kickUsed.y;
             }
         }
-        public static void Hold()
+        /// <summary>
+        /// Hold.
+        /// </summary>
+        /// <returns>Success state (false = unsuccessful)</returns>
+        public static bool Hold()
         {
 
             if (HoldPiece.current == 'N')
@@ -1082,11 +1225,8 @@ namespace Game
                 state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40] };
 
                 xoffset = 2;
-                yoffset = 18;
-                if (NativeKeyboard.IsKeyDown(Config.rotCcw)) { rotState = 3; }
-                else if (NativeKeyboard.IsKeyDown(Config.rot180)) { rotState = 2; }
-                else if (NativeKeyboard.IsKeyDown(Config.rotCw)) { rotState = 1; }
-                else { rotState = 0; }
+                yoffset = 19;
+                rotState = 0;
                 for (int x = 0; x < 5; x++)
                 {
                     for (int y = 0; y < 5; y++)
@@ -1094,7 +1234,33 @@ namespace Game
                         state[x + 2][-y + 23] = Piece.GetPiece(BagRandomizer.output[BagRandomizer.current][piecenum]).piece[rotState][y][x];
                     }
                 }
-                NextPiece();
+
+                if (spawnTries == 0)
+                {
+                    NextPiece();
+                }
+                if (NativeKeyboard.IsKeyDown(Config.rotCcw)) { RotCCW(); Config.prevFramePresses[5] = true; }
+                if (NativeKeyboard.IsKeyDown(Config.rot180)) { Rot180(); Config.prevFramePresses[6] = true; }
+                if (NativeKeyboard.IsKeyDown(Config.rotCw)) { RotCW(); Config.prevFramePresses[4] = true; }
+
+                for (int x = 0; x < 10; x++)
+                {
+                    for (int y = 0; y < 40; y++)
+                    {
+                        if (spawnTries >= 60)
+                        {
+                            Program.toppedOut = true;
+                        }
+                        if (state[x][y] && Matrix.state[x][y])
+                        {
+                            state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], };
+                            spawnTries++;
+                            return false;
+                        }
+                    }
+                }
+                spawnTries = 0;
+
                 UpdateGhost();
                 if (NativeKeyboard.IsKeyDown(Config.hardDrop) && !Config.prevFramePresses[2]) { LockPiece(null, null); }
             }
@@ -1104,11 +1270,8 @@ namespace Game
                 HoldPiece.used = true;
                 state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40] };
                 xoffset = 2;
-                yoffset = 18;
-                if (NativeKeyboard.IsKeyDown(Config.rotCcw)) { rotState = 3; }
-                else if (NativeKeyboard.IsKeyDown(Config.rot180)) { rotState = 2; }
-                else if (NativeKeyboard.IsKeyDown(Config.rotCw)) { rotState = 1; }
-                else { rotState = 0; }
+                yoffset = 19;
+                rotState = 0;
                 for (int x = 0; x < 5; x++)
                 {
                     for (int y = 0; y < 5; y++)
@@ -1118,10 +1281,33 @@ namespace Game
                 }
                 HoldPiece.current = piece;
                 piece = heldPiece;
+                
+            if (NativeKeyboard.IsKeyDown(Config.rotCcw)) { RotCCW(); Config.prevFramePresses[5] = true; }
+            if (NativeKeyboard.IsKeyDown(Config.rot180)) { Rot180(); Config.prevFramePresses[6] = true; }
+            if (NativeKeyboard.IsKeyDown(Config.rotCw)) { RotCW(); Config.prevFramePresses[4] = true; }
+
+            for (int x = 0; x < 10; x++)
+            {
+                for (int y = 0; y < 40; y++)
+                {
+                    if (spawnTries >= 60)
+                    {
+                        Program.toppedOut = true;
+                    }
+                    if (state[x][y] && Matrix.state[x][y])
+                    {
+                        state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], };
+                        spawnTries++;
+                        return false;
+                    }
+                }
+            }
+            spawnTries = 0;
                 UpdateGhost();
 
                 if (NativeKeyboard.IsKeyDown(Config.hardDrop) && !Config.prevFramePresses[2]) { LockPiece(null, null); }
             }
+            return true;
         }
         /// <summary>
         /// Get info of a future piece, up to 7 pieces
@@ -1210,7 +1396,31 @@ namespace Game
                     {
                         if (Matrix.state[x][y])
                         {
-                            xcache += "██";
+
+                            if (CurrentPiece.level.invisibleTimer == -1 || Matrix.invisTimer[x][y] < 0.25 * CurrentPiece.level.invisibleTimer)
+                            {
+                                xcache += "██";
+                            }
+                            else if (Matrix.invisTimer[x][y] >= 1 * CurrentPiece.level.invisibleTimer)
+                            {
+                                if (CurrentPiece.nextPieceSpawn[x][y])
+                                {
+                                    xcache += "XX";
+                                }
+                                else { xcache += "  "; }
+                            }
+                            else if (Matrix.invisTimer[x][y] >= 0.75 * CurrentPiece.level.invisibleTimer)
+                            {
+                                xcache += "░░";
+                            }
+                            else if (Matrix.invisTimer[x][y] >= 0.5 * CurrentPiece.level.invisibleTimer)
+                            {
+                                xcache += "▒▒";
+                            }
+                            else if (Matrix.invisTimer[x][y] >= 0.25 * CurrentPiece.level.invisibleTimer)
+                            {
+                                xcache += "▓▓";
+                            }
                         }
                         else if (CurrentPiece.state[x][y])
                         {
@@ -1239,10 +1449,7 @@ namespace Game
                         {
                             xcache += "XX";
                         }
-                        else
-                        {
-                            xcache += "  ";
-                        }
+                        else    {xcache += "  ";}
                     }
                     ycache[y] = xcache;
                     xcache = "";
@@ -2396,7 +2603,7 @@ namespace Game
             }
             // for(int i = 0; i < 80; i++)
             // {
-            //     list[i] = new Levels(0,2147483647,-1,1,1,false,true,false,4,1);
+            //     list[i] = new Levels(21,12,5,1,1,false,true,false,4,1);
             // }
         }
     }
@@ -2505,7 +2712,7 @@ namespace Game
                 {
                     Directory.CreateDirectory(dataLoc + "\\Retroblocks");
                 }
-                File.Create(dataLoc + "\\Retroblocks\\config.txt");
+                File.Create(dataLoc + "\\Retroblocks\\config.txt").Close();
             }
             #endregion
             #region Save
@@ -2527,7 +2734,7 @@ namespace Game
             das = 10;
             arr = 1;
             useSonicDrop = false;
-            fontSize = 10;
+            fontSize = 17;
             SaveConfig();
         }
 
@@ -2538,6 +2745,7 @@ namespace Game
         public static SoundPlayer lineClear2;
         public static SoundPlayer lineClear3;
         public static SoundPlayer lineClear4;
+        public static SoundPlayer topOut;
 
         public static void Setup()
         {
@@ -2545,10 +2753,12 @@ namespace Game
             lineClear2 = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\lineclear2.wav");
             lineClear3 = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\lineclear3.wav");
             lineClear4 = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\lineclear4.wav");
-            lineClear1.Load();
-            lineClear2.Load();
-            lineClear3.Load();
-            lineClear4.Load();
+            topOut     = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\topout.wav"    );
+            lineClear1.LoadAsync();
+            lineClear2.LoadAsync();
+            lineClear3.LoadAsync();
+            lineClear4.LoadAsync();
+            topOut    .LoadAsync();
         }
     }
 
@@ -2624,20 +2834,25 @@ public static class HighScores
             ResetScores();
         }
     }
-    public static void SaveScore(int score)
+    /// <summary>
+    /// Saves a score and returns the ranking.
+    /// </summary>
+    /// <param name="score">Score to save</param>
+    /// <returns>Ranking of saved score</returns>
+    public static int SaveScore(int score)
     {
         string dataLoc = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             #region Get score list
         Array.Sort(Scores);
         Array.Reverse(Scores);
-        if(score > Scores[5])
+        if(score > Scores[4])
         {
             int[] newScores = new int[6];
             for(int i = 0; i < 5; i++)
             {
                 newScores[i] = Scores[i];
             }
-            score = newScores[5];
+            newScores[5] = score;
             Array.Sort(newScores);
             Array.Reverse(newScores);
             for(int i = 0; i < 5; i++)
@@ -2656,7 +2871,9 @@ public static class HighScores
             writer.Write($"{Scores[0]}\n{Scores[1]}\n{Scores[2]}\n{Scores[3]}\n{Scores[4]}\n");
             writer.Close();
             #endregion
+            return Array.IndexOf(Scores, score) + 1;
         }
+        return 6;
     }
     private static void SaveScores()
     {
