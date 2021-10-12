@@ -577,11 +577,11 @@ namespace Game
             }
 
             // Hold
-            if (NativeKeyboard.IsKeyDown(Config.hold) && !Config.prevFramePresses[7] && areTimer < 0 && Program.paused == false)
+            if (NativeKeyboard.IsKeyDown(Config.hold) && !Config.prevFramePresses[7] && areTimer < 0 && Program.paused == false && level.hold)
             {
                 retryHold = !Hold();
             }
-            else if (retryHold)
+            else if (retryHold && level.hold)
             {
                 retryHold = !Hold();
             }
@@ -939,6 +939,10 @@ namespace Game
                 {
                     ResetLockDelay();
                 }
+                else if(level.g == 21)
+                {
+                    Fall(null, null);
+                }
                 if (areTimer < 0)
                 {
                     UpdateGhost();
@@ -986,6 +990,10 @@ namespace Game
                 if (landed)
                 {
                     ResetLockDelay();
+                }
+                else if (level.g == 21)
+                {
+                    Fall(null, null);
                 }
                 if (areTimer < 0)
                 {
@@ -1267,7 +1275,6 @@ namespace Game
             else if (HoldPiece.used == false)
             {
                 char heldPiece = HoldPiece.current;
-                HoldPiece.used = true;
                 state = new bool[10][] { new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40], new bool[40] };
                 xoffset = 2;
                 yoffset = 19;
@@ -1302,9 +1309,9 @@ namespace Game
                     }
                 }
             }
-            spawnTries = 0;
+                spawnTries = 0;
                 UpdateGhost();
-
+                HoldPiece.used = true;
                 if (NativeKeyboard.IsKeyDown(Config.hardDrop) && !Config.prevFramePresses[2]) { LockPiece(null, null); }
             }
             return true;
@@ -1385,29 +1392,18 @@ namespace Game
     static class Drawer
     {
         private static string[] Picture
-        {
-            get
+        {get{
+            string[] ycache = new string[24];
+            string xcache = "";
+            for (int y = 0; y < 24; y++)
             {
-                string[] ycache = new string[24];
-                string xcache = "";
-                for (int y = 0; y < 24; y++)
+                for (int x = 0; x < 10; x++)
                 {
-                    for (int x = 0; x < 10; x++)
-                    {
-                        if (Matrix.state[x][y])
+                    if (Matrix.state[x][y] && (Matrix.invisTimer[x][y] < CurrentPiece.level.invisibleTimer || CurrentPiece.level.invisibleTimer == -1))
                         {
-
                             if (CurrentPiece.level.invisibleTimer == -1 || Matrix.invisTimer[x][y] < 0.25 * CurrentPiece.level.invisibleTimer)
                             {
                                 xcache += "██";
-                            }
-                            else if (Matrix.invisTimer[x][y] >= 1 * CurrentPiece.level.invisibleTimer)
-                            {
-                                if (CurrentPiece.nextPieceSpawn[x][y])
-                                {
-                                    xcache += "XX";
-                                }
-                                else { xcache += "  "; }
                             }
                             else if (Matrix.invisTimer[x][y] >= 0.75 * CurrentPiece.level.invisibleTimer)
                             {
@@ -1422,7 +1418,7 @@ namespace Game
                                 xcache += "▓▓";
                             }
                         }
-                        else if (CurrentPiece.state[x][y])
+                    else if (CurrentPiece.state[x][y] && !CurrentPiece.level.pieceInvisible)
                         {
                             if (CurrentPiece.lockDelayTimer < 0.25 * CurrentPiece.level.lockDelay)
                             {
@@ -1441,23 +1437,23 @@ namespace Game
                                 xcache += "▓▓";
                             }
                         }
-                        else if (CurrentPiece.ghost[x][y])
+                    else if (CurrentPiece.ghost[x][y] && !CurrentPiece.level.pieceInvisible)
                         {
                             xcache += "##";
                         }
-                        else if (CurrentPiece.nextPieceSpawn[x][y])
+                    else if (CurrentPiece.nextPieceSpawn[x][y] && !CurrentPiece.level.pieceInvisible)
                         {
                             xcache += "XX";
                         }
-                        else    {xcache += "  ";}
-                    }
-                    ycache[y] = xcache;
-                    xcache = "";
+                    else    {xcache += "  ";}
                 }
-                return ycache;
+                ycache[y] = xcache;
+                xcache = "";
             }
-        }
+            return ycache;
+        }}
         private static bool prevFramePauseState = false;
+        private static bool drawHold = false;
         public static void Setup(bool doStartAnimation)
         {
             Console.SetCursorPosition(0, 0);
@@ -1641,23 +1637,11 @@ namespace Game
             Console.SetCursorPosition(0, 0);
             if (!Program.paused && !prevFramePauseState)
             {
-                #region Color
-                string[] Picture = Drawer.Picture;
-                for (int i = 0, j = 23; i < 24; i++, j--)
+                DrawBoard();
+                if(drawHold || CurrentPiece.level.hold == true)
                 {
-                    Console.SetCursorPosition(13, i);
-                    if (j == 23)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                    }
-                    else if (j == 19)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                    }
-                    Console.Write(Picture[j]);
+                    DrawHoldPiece();
                 }
-                #endregion
-                DrawHoldPiece();
                 DrawNextPieces();
                 DrawProgressBar();
                 DrawStats();
@@ -1679,11 +1663,41 @@ namespace Game
                 Setup(false);
             }
         }
+        private static void DrawBoard()
+        {
+            string[] Picture = Drawer.Picture;
+            for (int i = 0, j = 23; i < 24; i++, j--)
+            {
+                Console.SetCursorPosition(13, i);
+                if (j == 23)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                }
+                else if (j == 19)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                }
+                Console.Write(Picture[j]);
+            }
+        }
         private static void DrawHoldPiece()
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.SetCursorPosition(0, 1);
-            bool[][] _ = Piece.GetPiece(HoldPiece.current).piece[0];
+            bool[][] _;
+            if (CurrentPiece.level.hold)
+            {
+                _ = Piece.GetPiece(HoldPiece.current).piece[0];
+                Console.SetCursorPosition(0, 1);
+                drawHold = true;
+            }
+            else
+            {
+                _ = Piece.None.piece[0];
+                Console.SetCursorPosition(0, 0);
+                Console.Write("    ");
+                Console.SetCursorPosition(0, 1);
+                drawHold = false;
+            }
             Console.Write(GetMinos(_[1]));
             Console.SetCursorPosition(0, 2);
             Console.Write(GetMinos(_[2]));
@@ -1841,34 +1855,34 @@ namespace Game
             switch (l)
             {
                 default:
-                    e = "[··········]";
+                    e = "[----------]";
                     break;
                 case 1:
-                    e = "[=·········]";
+                    e = "[=---------]";
                     break;
                 case 2:
-                    e = "[==········]";
+                    e = "[==--------]";
                     break;
                 case 3:
-                    e = "[===·······]";
+                    e = "[===-------]";
                     break;
                 case 4:
-                    e = "[====······]";
+                    e = "[====------]";
                     break;
                 case 5:
-                    e = "[=====·····]";
+                    e = "[=====-----]";
                     break;
                 case 6:
-                    e = "[======····]";
+                    e = "[======----]";
                     break;
                 case 7:
-                    e = "[=======···]";
+                    e = "[=======---]";
                     break;
                 case 8:
-                    e = "[========··]";
+                    e = "[========--]";
                     break;
                 case 9:
-                    e = "[=========·]";
+                    e = "[=========-]";
                     break;
             }
             Console.SetCursorPosition(0, 5);
@@ -2544,11 +2558,11 @@ namespace Game
         public int lineAre;
         public bool pieceInvisible;
         public bool hold;
-        public bool nextInvisible;
+        public int nextPieces;
         public int das;
         public int arr;
         public static Levels[] list;
-        public Levels(double gravity, int lockDelay, int invisibleTimer, int are, int lineAre, bool pieceInvisible, bool hold, bool nextInvisible, int das, int arr)
+        public Levels(double gravity, int lockDelay, int invisibleTimer, int are, int lineAre, bool pieceInvisible, bool hold, int nextPieces, int das, int arr)
         {
             g = gravity;
             this.lockDelay = lockDelay;
@@ -2557,7 +2571,7 @@ namespace Game
             this.lineAre = lineAre;
             this.pieceInvisible = pieceInvisible;
             this.hold = hold;
-            this.nextInvisible = nextInvisible;
+            this.nextPieces = nextPieces;
             this.das = Math.Min(Config.das, das);
             this.arr = Math.Min(Config.arr, arr);
         }
@@ -2567,43 +2581,66 @@ namespace Game
             // TODO: make other levels when different mode
             for (int i = 0; i < 80; i++)
             {
-                if(i < 20)
+                switch (i) 
                 {
-                    list[i] = new Levels(Math.Min(0.01 * (1 / Math.Pow(0.8 - (i * 0.007), i)), 21), 30, -1, 10, 20, false, true, false, 20, 15);
-                } // Actual Gravity Increase
-                else if(i < 26)
-                {                     // G    lockdelay  invis        are                   line are
-                    list[i] = new Levels(21, -3 * i + 87, -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, false, (int)(0.6 * (-3 * i + 87)), (int)(0.6 * (-3 * i + 87)));
-                } // 20G, Lock delay and ARE decrease
-                else if(i < 32)
-                {
-                    list[i] = new Levels(21, (int)(-0.5 * i + 24.5), -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, false, (int)(0.5 * (-0.5 * i + 24.5)), (int)(0.5 * (-0.5 * i + 24.5)));
-                } // Lock delay decreases slower
-                else if(i < 45)
-                {
-                    list[i] = new Levels(21, (int)(-0.2 * i + 15), -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, false, (int)(0.5 * (-0.2 * i + 15)), (int)(0.5 * (-0.2 * i + 15)));
-                } // Lock delay decreases even slower
-                else if(i < 60)
-                {
-                    list[i] = new Levels(21, 6, -20 * i + 1200, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, false, 3, 3);
-                } // Lock delay fixed at 6, pieces disappear slowly and gets faster
-                else if(i < 65)
-                {
-                    list[i] = new Levels(21, 6, 0, 2, 4, false, false, false, 3, 3);
-                } // Invisible board, holdless
-                else if(i < 70)
-                {
-                    list[i] = new Levels(21, 6, 0, 2, 4, true, false, false, 3, 3);
-                } // Invisible board and piece, holdless
-                else if(i < 80)
-                {
-                    list[i] = new Levels(21, 6, 0, 2, 4, true, false, true, 3, 3);
-                } // Blind blockstacking simulator
+                    case < 20:
+                        list[i] = new Levels(Math.Min(0.01 * (1 / Math.Pow(0.8 - (i * 0.007), i)), 21), 30, -1, 10, 20, false, true, 7, 20, 15);
+                        break;
+                    case < 26:
+                        list[i] = new Levels(21, -3 * i + 87, -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, (int)(0.6 * (-3 * i + 87)), (int)(0.6 * (-3 * i + 87)));
+                        break;
+                    case < 32:
+                        list[i] = new Levels(21, (int)(-0.5 * i + 24.5), -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, (int)(0.5 * (-0.5 * i + 24.5)), (int)(0.5 * (-0.5 * i + 24.5)));
+                        break;
+                    case < 45:
+                        list[i] = new Levels(21, (int)(-0.2 * i + 15), -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, (int)(0.5 * (-0.2 * i + 15)), (int)(0.5 * (-0.2 * i + 15)));
+                        break;
+                    case < 50:
+                        list[i] = new Levels(21, 6, -60 * i + 3000, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, 3, 3);
+                        break;
+                    case 50:
+                        new Levels(21, 6, 30, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, 3, 3);
+                        break;
+                    case 51:
+                        new Levels(21, 6, 15, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, 3, 3);
+                        break;
+                    case 52:
+                        new Levels(21, 6, 7, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, 3, 3);
+                        break;
+                    case < 57:
+                        list[i] = new Levels(21, 6, 0, 2, 4, false, false, 7, 3, 3);
+                        break;
+                    case < 61:
+                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 7, 3, 3);
+                        break;
+                    case 61:
+                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 6, 3, 3);
+                        break;
+                    case 62:
+                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 5, 3, 3);
+                        break;
+                    case 63:
+                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 4, 3, 3);
+                        break;
+                    case 64:
+                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 3, 3, 3);
+                        break;
+                    case 65:
+                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 2, 3, 3);
+                        break;
+                    case 67:
+                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 1, 3, 3);
+                        break;
+                    default:
+                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 0, 3, 3);
+                        break;
+                }
+
                 // Get GM grade
             }
             // for(int i = 0; i < 80; i++)
             // {
-            //     list[i] = new Levels(21,12,5,1,1,false,true,false,4,1);
+            //     list[i] = new Levels(0, 100000, -1, 1, 1, false, true, 7, 3, 3);
             // }
         }
     }

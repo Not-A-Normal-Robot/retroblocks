@@ -243,3 +243,4 @@ C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-x86\retroblocks.csproj.
 C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-x86\retroblocks.dll
 C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-x86\retroblocks.pdb
 C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-x86\retroblocks.genruntimeconfig.cache
+C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-x86\retroblocks.csproj.AssemblyReference.cache
