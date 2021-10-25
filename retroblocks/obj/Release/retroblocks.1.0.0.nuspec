@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>retroblocks</id>
+    <version>1.0.0</version>
+    <authors>retroblocks</authors>
+    <description>Package Description</description>
+    <dependencies>
+      <group targetFramework=".NETCoreApp3.1">
+        <dependency id="System.Windows.Extensions" version="5.0.0" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+    <contentFiles>
+      <files include="any/netcoreapp3.1/sfx/levelup.wav" buildAction="Content" />
+      <files include="any/netcoreapp3.1/sfx/lineclear1.wav" buildAction="Content" />
+      <files include="any/netcoreapp3.1/sfx/lineclear2.wav" buildAction="Content" />
+      <files include="any/netcoreapp3.1/sfx/lineclear3.wav" buildAction="Content" />
+      <files include="any/netcoreapp3.1/sfx/lineclear4.wav" buildAction="Content" />
+      <files include="any/netcoreapp3.1/sfx/topout.wav" buildAction="Content" />
+      <files include="any/netcoreapp3.1/sfx/tspin.wav" buildAction="Content" />
+    </contentFiles>
+  </metadata>
+  <files>
+    <file src="C:\retroblocks\retroblocks\bin\Release\netcoreapp3.1\retroblocks.runtimeconfig.json" target="lib\netcoreapp3.1\retroblocks.runtimeconfig.json" />
+    <file src="C:\retroblocks\retroblocks\bin\Release\netcoreapp3.1\retroblocks.dll" target="lib\netcoreapp3.1\retroblocks.dll" />
+    <file src="C:\retroblocks\retroblocks\sfx\levelup.wav" target="content\sfx\levelup.wav" />
+    <file src="C:\retroblocks\retroblocks\sfx\levelup.wav" target="contentFiles\any\netcoreapp3.1\sfx\levelup.wav" />
+    <file src="C:\retroblocks\retroblocks\sfx\lineclear1.wav" target="content\sfx\lineclear1.wav" />
+    <file src="C:\retroblocks\retroblocks\sfx\lineclear1.wav" target="contentFiles\any\netcoreapp3.1\sfx\lineclear1.wav" />
+    <file src="C:\retroblocks\retroblocks\sfx\lineclear2.wav" target="content\sfx\lineclear2.wav" />
+    <file src="C:\retroblocks\retroblocks\sfx\lineclear2.wav" target="contentFiles\any\netcoreapp3.1\sfx\lineclear2.wav" />
+    <file src="C:\retroblocks\retroblocks\sfx\lineclear3.wav" target="content\sfx\lineclear3.wav" />
+    <file src="C:\retroblocks\retroblocks\sfx\lineclear3.wav" target="contentFiles\any\netcoreapp3.1\sfx\lineclear3.wav" />
+    <file src="C:\retroblocks\retroblocks\sfx\lineclear4.wav" target="content\sfx\lineclear4.wav" />
+    <file src="C:\retroblocks\retroblocks\sfx\lineclear4.wav" target="contentFiles\any\netcoreapp3.1\sfx\lineclear4.wav" />
+    <file src="C:\retroblocks\retroblocks\sfx\topout.wav" target="content\sfx\topout.wav" />
+    <file src="C:\retroblocks\retroblocks\sfx\topout.wav" target="contentFiles\any\netcoreapp3.1\sfx\topout.wav" />
+    <file src="C:\retroblocks\retroblocks\sfx\tspin.wav" target="content\sfx\tspin.wav" />
+    <file src="C:\retroblocks\retroblocks\sfx\tspin.wav" target="contentFiles\any\netcoreapp3.1\sfx\tspin.wav" />
+  </files>
+</package>

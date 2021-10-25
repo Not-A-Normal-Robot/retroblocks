@@ -130,7 +130,7 @@ namespace Game
                                     $"\n" +
                                     $"Lines: {CurrentPiece.lines}\n" +
                                     $"Level: {CurrentPiece.levelNum}\n" +
-                                    $"{(int)(CurrentPiece.level.g * 1000) / 1000}G {CurrentPiece.level.lockDelay}LD\n" +
+                                    $"{(CurrentPiece.level.g != double.PositiveInfinity ? (int)(CurrentPiece.level.g * 1000) / 1000d + "G" : "Infinite G")} {CurrentPiece.level.lockDelay}LD\n" +
                                     $"{CurrentPiece.level.invisibleTimer} invTimer\n" +
                                     $"{Config.das} --> {CurrentPiece.level.das} DAS\n" +
                                     $"{Config.arr} --> {CurrentPiece.level.arr} ARR\n" +
@@ -381,6 +381,7 @@ namespace Game
         public static bool[] lined;
         public static int ticksThisSecond;
         public static bool btb;
+        public static bool lastClearBtb;
         public static int combo;
         public static string lastClear;
         public static bool rotated;
@@ -447,15 +448,19 @@ namespace Game
         }
         public static void UpdateGravity()
         {
-            for (int i = 0; i < (int)Math.Floor(level.g); i++)
+            double g = Math.Min(21,level.g);
+            for (int i = 0; i < (int)Math.Floor(g); i++)
             {
                 Fall(null, null);
             }
-            leftoverG += level.g - (int)Math.Floor(level.g);
-            if (leftoverG >= 1)
+            if(level.g < 21)
             {
-                Fall(null, null);
-                leftoverG -= 1;
+                leftoverG += level.g - (int)Math.Floor(level.g);
+                if (leftoverG >= 1)
+                {
+                    Fall(null, null);
+                    leftoverG -= 1;
+                }
             }
         }
         public static void UpdateLines()
@@ -807,6 +812,7 @@ namespace Game
                     score += (int)Math.Floor(lines / 10d) * 100;
                     lineAreTimer = 0;
                     btb = false;
+                    lastClearBtb = false;
                     combo++;
                     lastClear = "Single   ";
                     Sounds.lineClear1.Play();
@@ -816,6 +822,7 @@ namespace Game
                     score += (int)Math.Floor(lines / 10d) * 300;
                     lineAreTimer = 0;
                     btb = false;
+                    lastClearBtb = false;
                     combo++;
                     lastClear = "Double   ";
                     Sounds.lineClear2.Play();
@@ -825,6 +832,7 @@ namespace Game
                     score += (int)Math.Floor(lines / 10d) * 500;
                     lineAreTimer = 0;
                     btb = false;
+                    lastClearBtb = false;
                     combo++;
                     lastClear = "Triple   ";
                     Sounds.lineClear3.Play();
@@ -833,10 +841,12 @@ namespace Game
                     lines += 4;
                     if (btb)
                     {
+                        lastClearBtb = true;
                         score += (int)Math.Floor(lines / 10d) * 1200;
                     }
                     else
                     {
+                        lastClearBtb = false;
                         score += (int)Math.Floor(lines / 10d) * 800;
                     }
                     lineAreTimer = 0;
@@ -933,6 +943,7 @@ namespace Game
         }
         public static void Left()
         {
+            bool prevLanded = landed;
             if (Array.IndexOf(state[0], true) == -1)
             {
                 bool[][] shifted = new bool[10][]
@@ -973,9 +984,19 @@ namespace Game
                 {
                     ResetLockDelay();
                 }
-                else if(level.g == 21)
+                else if(level.g > 5 && prevLanded)
                 {
-                    Fall(null, null);
+                    while (!landed)
+                    {
+                        Fall(null, null);
+                    }
+                }
+                else if(Config.useSonicDrop && NativeKeyboard.IsKeyDown(Config.softDrop))
+                {
+                    while (!landed)
+                    {
+                        Fall(null, null);
+                    }
                 }
                 if (areTimer < 0)
                 {
@@ -985,6 +1006,7 @@ namespace Game
         }
         public static void Right()
         {
+            bool prevLanded = landed;
             if (Array.IndexOf(state[9], true) == -1)
             {
                 bool[][] shifted = new bool[10][]
@@ -1025,9 +1047,19 @@ namespace Game
                 {
                     ResetLockDelay();
                 }
-                else if (level.g == 21)
+                else if (level.g > 5 && prevLanded)
                 {
-                    Fall(null, null);
+                    while (!landed)
+                    {
+                        Fall(null, null);
+                    }
+                }
+                else if (Config.useSonicDrop && NativeKeyboard.IsKeyDown(Config.softDrop))
+                {
+                    while (!landed)
+                    {
+                        Fall(null, null);
+                    }
                 }
                 if (areTimer < 0)
                 {
@@ -1932,13 +1964,13 @@ namespace Game
             }
             Console.SetCursorPosition(0, 5);
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write($"{(CurrentPiece.btb ? "Back To Back" : "            ")}");
+            Console.Write($"{(CurrentPiece.lastClearBtb ? "Back To Back" : "            ")}");
             Console.SetCursorPosition(0, 6);
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.Write($"{CurrentPiece.lastClear}");
             Console.SetCursorPosition(0, 8);
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.Write($"Lvl {CurrentPiece.levelNum}\n{(int)(CurrentPiece.level.g * 1000) / 1000d}G   \n{CurrentPiece.level.lockDelay}LD     \n\n\n{CurrentPiece.lines}/{(CurrentPiece.levelNum + 1) * 10} lines\n{e}\n\nDelays:\n{CurrentPiece.level.are} Spawn \n{CurrentPiece.level.lineAre} Line \n\n\nScore\n{CurrentPiece.score}");
+            Console.Write($"Lvl {CurrentPiece.levelNum}\n{(CurrentPiece.level.g != double.PositiveInfinity ? (int)(CurrentPiece.level.g * 1000) / 1000d + "G    " : "Infinite G")}\n{CurrentPiece.level.lockDelay}LD     \n\n\n{CurrentPiece.lines}/{(CurrentPiece.levelNum + 1) * 10} lines\n{e}\n\nDelays:\n{CurrentPiece.level.are} Spawn \n{CurrentPiece.level.lineAre} Line \n\n\nScore\n{CurrentPiece.score}");
             Console.SetCursorPosition(0, 29);
             Console.Write($"{Program.fps} FPS, {Program.tps} / 60 TPS");
         }
@@ -2632,55 +2664,54 @@ namespace Game
                         list[i] = new Levels(Math.Min(0.01 * (1 / Math.Pow(0.8 - (i * 0.007), i)), 21), 30, -1, 10, 20, false, true, 7, 20, 15);
                         break;
                     case < 26:
-                        list[i] = new Levels(21, -3 * i + 87, -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, (int)(0.6 * (-3 * i + 87)), (int)(0.6 * (-3 * i + 87)));
+                        list[i] = new Levels(double.PositiveInfinity, -3 * i + 87, -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, (int)(0.6 * (-3 * i + 87)), (int)(0.6 * (-3 * i + 87)));
                         break;
                     case < 32:
-                        list[i] = new Levels(21, (int)(-0.5 * i + 24.5), -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, (int)(0.5 * (-0.5 * i + 24.5)), (int)(0.5 * (-0.5 * i + 24.5)));
+                        list[i] = new Levels(double.PositiveInfinity, (int)(-0.5 * i + 24.5), -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, (int)(0.5 * (-0.5 * i + 24.5)), (int)(0.5 * (-0.5 * i + 24.5)));
                         break;
                     case < 45:
-                        list[i] = new Levels(21, (int)(-0.2 * i + 15), -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, (int)(0.5 * (-0.2 * i + 15)), (int)(0.5 * (-0.2 * i + 15)));
+                        list[i] = new Levels(double.PositiveInfinity, (int)(-0.2 * i + 15), -1, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, (int)(0.5 * (-0.2 * i + 15)), (int)(0.5 * (-0.2 * i + 15)));
                         break;
                     case < 50:
-                        list[i] = new Levels(21, 6, -60 * i + 3000, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, 3, 3);
+                        list[i] = new Levels(double.PositiveInfinity, 6, -60 * i + 3000, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, 3, 3);
                         break;
                     case 50:
-                        new Levels(21, 6, 30, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, 3, 3);
+                        list[i] = new Levels(double.PositiveInfinity, 6, 30, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, 3, 3);
                         break;
                     case 51:
-                        new Levels(21, 6, 15, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, 3, 3);
+                        list[i] = new Levels(double.PositiveInfinity, 6, 15, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, 3, 3);
                         break;
                     case 52:
-                        new Levels(21, 6, 7, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, 3, 3);
+                        list[i] = new Levels(double.PositiveInfinity, 6, 7, (int)(0.2 * -i + 14), (int)(0.4 * -i + 28), false, true, 7, 3, 3);
                         break;
                     case < 57:
-                        list[i] = new Levels(21, 6, 0, 2, 4, false, false, 7, 3, 3);
+                        list[i] = new Levels(double.PositiveInfinity, 6, 0, 2, 4, false, false, 7, 3, 3);
                         break;
                     case < 61:
-                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 7, 3, 3);
+                        list[i] = new Levels(double.PositiveInfinity, 6, 0, 2, 4, true, false, 7, 3, 3);
                         break;
                     case 61:
-                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 6, 3, 3);
+                        list[i] = new Levels(double.PositiveInfinity, 6, 0, 2, 4, true, false, 6, 3, 3);
                         break;
                     case 62:
-                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 5, 3, 3);
+                        list[i] = new Levels(double.PositiveInfinity, 6, 0, 2, 4, true, false, 5, 3, 3);
                         break;
                     case 63:
-                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 4, 3, 3);
+                        list[i] = new Levels(double.PositiveInfinity, 6, 0, 2, 4, true, false, 4, 3, 3);
                         break;
                     case 64:
-                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 3, 3, 3);
+                        list[i] = new Levels(double.PositiveInfinity, 6, 0, 2, 4, true, false, 3, 3, 3);
                         break;
                     case 65:
-                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 2, 3, 3);
+                        list[i] = new Levels(double.PositiveInfinity, 6, 0, 2, 4, true, false, 2, 3, 3);
                         break;
                     case 67:
-                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 1, 3, 3);
+                        list[i] = new Levels(double.PositiveInfinity, 6, 0, 2, 4, true, false, 1, 3, 3);
                         break;
                     default:
-                        list[i] = new Levels(21, 6, 0, 2, 4, true, false, 0, 3, 3);
+                        list[i] = new Levels(double.PositiveInfinity, 6, 0, 2, 4, true, false, 0, 3, 3);
                         break;
                 }
-
             }
         }
     }
