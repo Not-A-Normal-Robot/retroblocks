@@ -237,7 +237,6 @@ C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-x64\retroblocks.Generat
 C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-x64\retroblocks.AssemblyInfoInputs.cache
 C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-x64\retroblocks.AssemblyInfo.cs
 C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-x64\retroblocks.csproj.CoreCompileInputs.cache
-C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-x64\retroblocks.csproj.CopyComplete
 C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-x64\retroblocks.dll
 C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-x64\retroblocks.pdb
 C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-x64\retroblocks.genruntimeconfig.cache

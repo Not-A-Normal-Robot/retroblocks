@@ -61,6 +61,7 @@ namespace Menu
             while (!start)
             {
                 #region Draw screen
+                Program.DisableQuickEdit(null, null);
                 Console.SetCursorPosition(0, 0);
                 switch (menu)
                 {
