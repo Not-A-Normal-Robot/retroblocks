@@ -1,4 +1,5 @@
 ﻿using System;
+using static Game.Config;
 using Game;
 
 namespace Menu
@@ -14,50 +15,69 @@ namespace Menu
             "NOT_A_ROBOT\n" +
             "\n" +
             "\n" +
-            "\n" +
             "SFX\n" +
             "SFXR by DrPetter" +
+            "\n" +
+            "\n" +
+            "Bug testers\n" +
+            "User670 (testing on Chinese CMD and Windows Terminal)\n" +
             "\n" +
             "\n" +
             "Press Enter to close";
         static int cursorPos;
         static bool start;
-        static bool isInCredits;
-        static bool[] prevFrameInputs;
+        private static int m;
+        /// <summary>
+        /// 0: main menu, 1: control settings, 2: display settings, 3: credits
+        /// </summary>
+        static int menu
+        {
+            get
+            {
+                return m;
+            }
+            set
+            {
+                Console.Clear();
+                cursorPos = 0;
+                m = value;
+            }
+        }
+        /// <summary>
+        /// cursorPos shouldn't go above this[menu]
+        /// </summary>
+        static readonly int[] cursorLimits = new int[4] { 3, 12, 1, 0 };
+        /// <summary>
+        /// left, right, up, down, enter
+        /// </summary>
+        static readonly int[] acceptedInputs = new int[5] { 37, 39, 38, 40, 13 };
+        static int[] prevFrameInputs = new int[5];
         public static void Start()
         {
             start = false;
-            prevFrameInputs = new bool[100];
             cursorPos = 0;
             HighScores.LoadScores();
-            Config.LoadConfig();
+            LoadConfig();
             while (!start)
             {
                 #region Draw screen
                 Console.SetCursorPosition(0, 0);
-                if (!isInCredits)
+                switch (menu)
                 {
-                    Console.Write(
+                    case 0:
+                        Console.Write(
                         $"===================\n" +
                         $"||  RETROBLOCKS  ||\n" +
                         $"===================\n\n" +
-                        $"{(cursorPos == 0 ? "> " : "  ")}Start!\n\n" +
-                        $"Settings: \n" +
-                        $"{(cursorPos == 1 ? "> " : "  ")}Font Size: {Config.fontSize} - Default: 17\n\n" +
-                        $"Handling: \n" +
-                        $"{(cursorPos == 2 ? "> " : "  ")}DAS: {Config.das} - Default: 10\n" +
-                        $"{(cursorPos == 3 ? "> " : "  ")}ARR: {Config.arr} - Default: 1\n" +
-                        $"{(cursorPos == 4 ? "> " : "  ")}Soft Drop Mode: {(Config.useSonicDrop ? "instant" : "normal")} - Default: normal\n\n" +
-                        $"Controls: (Note: Setting up is glitchy :P)\n" +
-                        $"{(cursorPos == 5 ? "> " : "  ")}Left: {Config.left} - Default: Left Arrow (37)\n" +
-                        $"{(cursorPos == 6 ? "> " : "  ")}Right: {Config.right} - Default: Right Arrow (39)\n" +
-                        $"{(cursorPos == 7 ? "> " : "  ")}Hard Drop: {Config.hardDrop} - Default: Space (32)\n" +
-                        $"{(cursorPos == 8 ? "> " : "  ")}Soft Drop: {Config.softDrop} - Default: Down Arrow (40)\n" +
-                        $"{(cursorPos == 9 ? "> " : "  ")}Rotate Clockwise: {Config.rotCw} - Default: Up Arrow (38)\n" +
-                        $"{(cursorPos == 10 ? "> " : "  ")}Rotate Counterclockwise: {Config.rotCcw} - Default: Z (90)\n" +
-                        $"{(cursorPos == 11 ? "> " : "  ")}Rotate 180: {Config.rot180} - Default: X (88)\n" +
-                        $"{(cursorPos == 12 ? "> " : "  ")}Hold: {Config.hold} - Default: C (67)\n\n" +
-                        $"{(cursorPos == 13 ? "> " : "  ")}Credits\n" +
+                        $"{(cursorPos == 0 ? "> " : "  ")}Start!\n" +
+                        $"\n" +
+                        $"\n" +
+                        $"Settings:\n" +
+                        $"{(cursorPos == 1 ? "> " : "  ")}Controls\n" +
+                        $"{(cursorPos == 2 ? "> " : "  ")}Display\n" +
+                        $"{(cursorPos == 3 ? "> " : "  ")}Credits\n" +
+                        $"\n" +
+                        $"\n" +
                         $"Scores:\n" +
                         $"{HighScores.Scores[0]}\n" +
                         $"{HighScores.Scores[1]}\n" +
@@ -65,413 +85,275 @@ namespace Menu
                         $"{HighScores.Scores[3]}\n" +
                         $"{HighScores.Scores[4]}\n"
                         );
+                        break;
+                    case 1:
+                        Console.Write(
+                            $"Controls\n" +
+                            $"========\n" +
+                            $"\n" +
+                            $"{(cursorPos == 0 ? "> " : "  ")}DAS: {(cursorPos == 0 && das > 1 ? "<< " : "   ")}{das}{(cursorPos == 0 && das < 20 ? " >>" : "     ")}\n" +
+                            $"{(cursorPos == 1 ? "> " : "  ")}ARR: {(cursorPos == 1 && arr > 0 ? "<< " : "   ")}{arr}{(cursorPos == 1 && arr < 10 ? " >>" : "     ")}\n" +
+                            $"{(cursorPos == 2 ? "> " : "  ")}Soft Drop Mode: {(cursorPos == 2 ? "<< " : "   ")}{(useSonicDrop ? "instant" : "normal")}{(cursorPos == 2 ? " >> " : "    ")}\n" +
+                            $"\n" +
+                            $"Keybinds\n" +
+                            $"========\n" +
+                            $"{(cursorPos == 3 ? "> " : "  ")}Left: {left} (Default: 37 Left Arrow)\n" +
+                            $"{(cursorPos == 4 ? "> " : "  ")}Right: {right} (Default: 39 Right Arrow)\n" +
+                            $"{(cursorPos == 5 ? "> " : "  ")}Hard Drop: {hardDrop} (Default: 32 Space)\n" +
+                            $"{(cursorPos == 6 ? "> " : "  ")}Soft Drop: {softDrop} (Default: 40 Down Arrow)\n" +
+                            $"{(cursorPos == 7 ? "> " : "  ")}Rotate Clockwise: {rotCw} (Default: 38 Up Arrow)\n" +
+                            $"{(cursorPos == 8 ? "> " : "  ")}Rotate Counterclockwise: {rotCcw} (Default: 90 Z key)\n" +
+                            $"{(cursorPos == 9 ? "> " : "  ")}Rotate 180 degrees: {rot180} (Default: 88 X key)\n" +
+                            $"{(cursorPos ==10 ? "> " : "  ")}Swap Hold Piece: {hold} (Default: 67 C key)\n" +
+                            $"\n" +
+                            $"{(cursorPos ==11 ? "> " : "  ")}Reset Controls\n" +
+                            $"\n" +
+                            $"{(cursorPos ==12 ? "> " : "  ")}Exit"
+                            );
+                        break;
+                    case 2:
+                        Console.Write(
+                            $"Display\n" +
+                            $"=======\n" +
+                            $"\n" +
+                            $"{(cursorPos == 0 ? "> " : "  ")}ASCII compatibility mode: {(asciiMode ? "ON " : "OFF")}\n" +
+                            $"Skin customization: coming soon!\n" +
+                            $"\n" +
+                            $"{(cursorPos == 1 ? "> " : "  ")}Exit"
+                            );
+                        break;
+                    case 3:
+                        Console.Write(credits);
+                        break;
                 }
-                else
+
+                #endregion
+                #region Generic navigation code
+                for (int i = 0; i < prevFrameInputs.Length; i++)
                 {
-                    Console.Write(credits);
+                    if (NativeKeyboard.IsKeyDown(acceptedInputs[i]))
+                    {
+                        prevFrameInputs[i]++;
+                    }
+                    else
+                    {
+                        prevFrameInputs[i] = 0;
+                    }
+                    if(prevFrameInputs[i] > 1000)
+                    {
+                        prevFrameInputs[i] = 100;
+                    }
+                }
+                if (prevFrameInputs[0] == 1 || prevFrameInputs[0] > 15)
+                {
+                    if (prevFrameInputs[0] > 15)
+                    {
+                        prevFrameInputs[0] = 12;
+                    }
+                    Left();
+                }
+                if (prevFrameInputs[1] == 1 || prevFrameInputs[1] > 15)
+                {
+                    if (prevFrameInputs[1] > 15)
+                    {
+                        prevFrameInputs[1] = 12;
+                    }
+                    Right();
+                }
+                if (prevFrameInputs[2] == 1 || prevFrameInputs[2] > 15)
+                {
+                    if (prevFrameInputs[2] > 15)
+                    {
+                        prevFrameInputs[2] = 12;
+                    }
+                    if (cursorPos == 0 && cursorLimits[menu] != 0)
+                    {
+                        cursorPos = cursorLimits[menu];
+                    }
+                    else if (cursorLimits[menu] != 0)
+                    {
+                        cursorPos--;
+                    }
+                }
+                if (prevFrameInputs[3] == 1 || prevFrameInputs[3] > 15)
+                {
+                    if (prevFrameInputs[3] > 15)
+                    {
+                        prevFrameInputs[3] = 12;
+                    }
+                    if (cursorPos == cursorLimits[menu])
+                    {
+                        cursorPos = 0;
+                    }
+                    else
+                    {
+                        cursorPos++;
+                    }
+                }
+                if (prevFrameInputs[4] == 1 || prevFrameInputs[4] > 15)
+                {
+                    if (prevFrameInputs[4] > 15)
+                    {
+                        prevFrameInputs[4] = 12;
+                    }
+                    Enter();
                 }
                 #endregion
-                if (!isInCredits)
-                {
+                System.Threading.Thread.Sleep(15);
+            }
+            start = false;
+        }
+        private static void Left()
+        {
+            switch (menu)
+            {
+                case 1:
                     switch (cursorPos)
                     {
                         case 0:
-                            #region Start
-                            if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
+                            if(das > 1)
                             {
-                                cursorPos++;
-                                break;
+                                das--;
+                                SaveConfig();
                             }
-                            if (NativeKeyboard.IsKeyDown(13))
-                            {
-                                start = true;
-                                Console.Clear();
-                            }
-                            break;
-                        #endregion
+                            return;
                         case 1:
-                            #region Font Size
-                            if (NativeKeyboard.IsKeyDown(39) && Config.fontSize < 36 && !prevFrameInputs[39])
+                            if (arr > 0)
                             {
-                                Config.fontSize++;
-                                ConsoleHelper.SetCurrentFont("Consolas",(short)Config.fontSize);
-                                Config.SaveConfig();
+                                arr--;
+                                SaveConfig();
                             }
-                            if (NativeKeyboard.IsKeyDown(37) && Config.fontSize > 5 && !prevFrameInputs[37])
-                            {
-                                Config.fontSize--;
-                                ConsoleHelper.SetCurrentFont("Consolas",(short)Config.fontSize);
-                                Config.SaveConfig();
-                            }
-                            if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
-                            {
-                                cursorPos++;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
-                            {
-                                cursorPos--;
-                                break;
-                            }
-                            break;
-                            #endregion
+                            return;
                         case 2:
-                            #region DAS
-                            if (NativeKeyboard.IsKeyDown(39) && Config.das < 20 && !prevFrameInputs[39])
-                            {
-                                Config.das++;
-                                Config.SaveConfig();
-                                Console.Clear();
-                            }
-                            if (NativeKeyboard.IsKeyDown(37) && Config.das > 1 && !prevFrameInputs[37])
-                            {
-                                Config.das--;
-                                Config.SaveConfig();
-                                Console.Clear();
-                            }
-                            if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
-                            {
-                                cursorPos++;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
-                            {
-                                cursorPos--;
-                                break;
-                            }
-                            break;
-                        #endregion
-                        case 3:
-                            #region ARR
-                            if (NativeKeyboard.IsKeyDown(39) && Config.arr < 15 && !prevFrameInputs[39])
-                            {
-                                Config.arr++;
-                                Config.SaveConfig();
-                                Console.Clear();
-                            }
-                            if (NativeKeyboard.IsKeyDown(37) && Config.arr > 0 && !prevFrameInputs[37])
-                            {
-                                Config.arr--;
-                                Config.SaveConfig();
-                                Console.Clear();
-                            }
-                            if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
-                            {
-                                cursorPos++;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
-                            {
-                                cursorPos--;
-                                break;
-                            }
-                            break;
-                        #endregion
-                        case 4:
-                            #region Sonic Drop
-                            if (NativeKeyboard.IsKeyDown(39) && !prevFrameInputs[39])
-                            {
-                                Config.useSonicDrop = !Config.useSonicDrop;
-                                Config.SaveConfig();
-                                Console.Clear();
-                            }
-                            if (NativeKeyboard.IsKeyDown(37) && !prevFrameInputs[37])
-                            {
-                                Config.useSonicDrop = !Config.useSonicDrop;
-                                Config.SaveConfig();
-                                Console.Clear();
-                            }
-                            if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
-                            {
-                                cursorPos++;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
-                            {
-                                cursorPos--;
-                                break;
-                            }
-                            break;
-                        #endregion
-                        case 5:
-                            #region Left
-                            if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
-                            {
-                                cursorPos++;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
-                            {
-                                cursorPos--;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(13))
-                            {
-                                Console.SetCursorPosition(8, 9);
-                                Console.Write("Awaiting input, press Esc to cancel - Default: Left Arrow (37)               ");
-                                System.Threading.Thread.Sleep(250);
-                                ConsoleKeyInfo key = Console.ReadKey();
-                                while (key.Key == ConsoleKey.Enter)
-                                {
-                                    key = Console.ReadKey();
-                                }
-                                if (key.Key != ConsoleKey.Escape)
-                                {
-                                    Config.left = (int)key.Key;
-                                    Config.SaveConfig();
-                                }
-                                Console.Clear();
-                            }
-                            break;
-                        #endregion
-                        case 6:
-                            #region Right
-                            if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
-                            {
-                                cursorPos++;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
-                            {
-                                cursorPos--;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(13))
-                            {
-                                Console.SetCursorPosition(9, 10);
-                                Console.Write("Awaiting input, press Esc to cancel - Default: Right Arrow (39)               ");
-                                System.Threading.Thread.Sleep(250);
-                                ConsoleKeyInfo key = Console.ReadKey();
-                                while (key.Key == ConsoleKey.Enter)
-                                {
-                                    key = Console.ReadKey();
-                                }
-                                if (key.Key != ConsoleKey.Escape)
-                                {
-                                    Config.right = (int)key.Key;
-                                    Config.SaveConfig();
-                                }
-                                Console.Clear();
-                            }
-                            break;
-                        #endregion
-                        case 7:
-                            #region Hard Drop
-                            if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
-                            {
-                                cursorPos++;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
-                            {
-                                cursorPos--;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(13))
-                            {
-                                Console.SetCursorPosition(13, 11);
-                                Console.Write("Awaiting input, press Esc to cancel - Default: Space (32)               ");
-                                System.Threading.Thread.Sleep(250);
-                                ConsoleKeyInfo key = Console.ReadKey();
-                                while (key.Key == ConsoleKey.Enter)
-                                {
-                                    key = Console.ReadKey();
-                                }
-                                if (key.Key != ConsoleKey.Escape)
-                                {
-                                    Config.hardDrop = (int)key.Key;
-                                    Config.SaveConfig();
-                                }
-                                Console.Clear();
-                            }
-                            break;
-                        #endregion
-                        case 8:
-                            #region Soft Drop
-                            if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
-                            {
-                                cursorPos++;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
-                            {
-                                cursorPos--;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(13))
-                            {
-                                Console.SetCursorPosition(13, 12);
-                                Console.Write("Awaiting input, press Esc to cancel - Default: Down Arrow (40)               ");
-                                System.Threading.Thread.Sleep(250);
-                                ConsoleKeyInfo key = Console.ReadKey();
-                                while (key.Key == ConsoleKey.Enter)
-                                {
-                                    key = Console.ReadKey();
-                                }
-                                if (key.Key != ConsoleKey.Escape)
-                                {
-                                    Config.softDrop = (int)key.Key;
-                                    Config.SaveConfig();
-                                }
-                                Console.Clear();
-                            }
-                            break;
-                        #endregion
-                        case 9:
-                            #region Rot cw
-                            if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
-                            {
-                                cursorPos++;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
-                            {
-                                cursorPos--;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(13))
-                            {
-                                Console.SetCursorPosition(19, 13);
-                                Console.Write("Awaiting input, press Esc to cancel - Default: Up Arrow (38)               ");
-                                System.Threading.Thread.Sleep(250);
-                                ConsoleKeyInfo key = Console.ReadKey();
-                                while (key.Key == ConsoleKey.Enter)
-                                {
-                                    key = Console.ReadKey();
-                                }
-                                if (key.Key != ConsoleKey.Escape)
-                                {
-                                    Config.rotCw = (int)key.Key;
-                                    Config.SaveConfig();
-                                }
-                                Console.Clear();
-                            }
-                            break;
-                        #endregion
-                        case 10:
-                            #region Rot ccw
-                            if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
-                            {
-                                cursorPos++;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
-                            {
-                                cursorPos--;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(13))
-                            {
-                                Console.SetCursorPosition(26, 14);
-                                Console.Write("Awaiting input, press Esc to cancel - Default: Z (90)               ");
-                                System.Threading.Thread.Sleep(250);
-                                ConsoleKeyInfo key = Console.ReadKey();
-                                while (key.Key == ConsoleKey.Enter)
-                                {
-                                    key = Console.ReadKey();
-                                }
-                                if (key.Key != ConsoleKey.Escape)
-                                {
-                                    Config.rotCcw = (int)key.Key;
-                                    Config.SaveConfig();
-                                }
-                                Console.Clear();
-                            }
-                            break;
-                        #endregion
-                        case 11:
-                            #region Rot 180
-                            if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
-                            {
-                                cursorPos++;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
-                            {
-                                cursorPos--;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(13))
-                            {
-                                Console.SetCursorPosition(14, 15);
-                                Console.Write("Awaiting input, press Esc to cancel - Default: X (88)               ");
-                                System.Threading.Thread.Sleep(250);
-                                ConsoleKeyInfo key = Console.ReadKey();
-                                while (key.Key == ConsoleKey.Enter)
-                                {
-                                    key = Console.ReadKey();
-                                }
-                                if (key.Key != ConsoleKey.Escape)
-                                {
-                                    Config.rot180 = (int)key.Key;
-                                    Config.SaveConfig();
-                                }
-                                Console.Clear();
-                            }
-                            break;
-                        #endregion
-                        case 12:
-                            #region Hold
-                            if (NativeKeyboard.IsKeyDown(40) && !prevFrameInputs[40])
-                            {
-                                cursorPos++;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
-                            {
-                                cursorPos--;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(13))
-                            {
-                                Console.SetCursorPosition(8, 16);
-                                Console.Write("Awaiting input, press Esc to cancel - Default: C (67)               ");
-                                System.Threading.Thread.Sleep(250);
-                                ConsoleKeyInfo key = Console.ReadKey();
-                                while (key.Key == ConsoleKey.Enter)
-                                {
-                                    key = Console.ReadKey();
-                                }
-                                if (key.Key != ConsoleKey.Escape)
-                                {
-                                    Config.rot180 = (int)key.Key;
-                                    Config.SaveConfig();
-                                }
-                                Console.Clear();
-                            }
-                            break;
-                        #endregion
-                        case 13:
-                            #region Credits
-                            if (NativeKeyboard.IsKeyDown(38) && !prevFrameInputs[38])
-                            {
-                                cursorPos--;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(13) && !prevFrameInputs[13])
-                            {
-                                isInCredits = true;
-                                Console.Clear();
-                            }
-                            break;
-                            #endregion
+                            useSonicDrop = !useSonicDrop;
+                            SaveConfig();
+                            return;
                     }
-                }
-                else
-                {
-                    if(NativeKeyboard.IsKeyDown(13) && !prevFrameInputs[13])
+                    return;
+                case 2:
+                    if (cursorPos == 0)
                     {
-                        isInCredits = false;
-                        Console.Clear();
+                        asciiMode = !asciiMode;
+                        SaveConfig();
                     }
-                }
-                
-                for (int i = 0; i < prevFrameInputs.Length; i++)
-                {
-                    prevFrameInputs[i] = NativeKeyboard.IsKeyDown(i);
-                }
+                    return;
             }
-            start = false;
+        }
+        private static void Right()
+        {
+
+            switch (menu)
+            {
+                case 1:
+                    switch (cursorPos)
+                    {
+                        case 0:
+                            if (das < 20)
+                            {
+                                das++;
+                                SaveConfig();
+                            }
+                            return;
+                        case 1:
+                            if (arr < 10)
+                            {
+                                arr++;
+                                SaveConfig();
+                            }
+                            return;
+                        case 2:
+                            useSonicDrop = !useSonicDrop;
+                            SaveConfig();
+                            return;
+                    }
+                    return;
+                case 2:
+                    if (cursorPos == 0)
+                    {
+                        asciiMode = !asciiMode;
+                        SaveConfig();
+                    }
+                    break;
+                default:
+                    return;
+            }
+        }
+        private static void Enter()
+        {
+
+            switch (menu)
+            {
+                case 0:
+                    switch (cursorPos)
+                    {
+                        case 0:
+                            start = true;
+                            return;
+                        default:
+                            menu = cursorPos;
+                            return;
+                    }
+                case 1:
+                    switch (cursorPos)
+                    {
+                        case < 3:
+                            return;
+                        case 11:
+                            int f = fontSize;
+                            ResetConfig();
+                            fontSize = f;
+                            return;
+                        case 12:
+                            menu = 0;
+                            return;
+                        default:
+                            Console.Clear();
+                            Console.Write($"Awaiting input for \"{GetButtonName(cursorPos - 3)}\".\n" +
+                                $"Press Escape to cancel.\n" +
+                                $"The enter/return key is not a valid key for the input.\n" +
+                                $"Default keybind: {GetDefaultButtonKeybind(cursorPos - 3)}");
+                            int key = -1;
+                            while (true) 
+                            {
+                                for(int i = 0; i < 255; i++)
+                                {
+                                    if (NativeKeyboard.IsKeyDown(i))
+                                    {
+                                        if(i == 27)
+                                        {
+                                            key = -2;
+                                        }
+                                        if(i == 13)
+                                        {
+                                            continue;
+                                        }
+                                        key = i;
+                                        break;
+                                    }
+                                }
+                                if(key != -1)
+                                {
+                                    break;
+                                }
+                            }
+                            if(key != -2)
+                            {
+                                GetButtonRef(cursorPos - 3) = key;
+                                SaveConfig();
+                            }
+                            Console.Clear();
+                            return;
+                    }
+                case 2:
+                    if (cursorPos == 1)
+                    {
+                        menu = 0;
+                    }
+                    return;
+                case 3:
+                    menu = 0;
+                    return;
+            }
         }
     }
 }

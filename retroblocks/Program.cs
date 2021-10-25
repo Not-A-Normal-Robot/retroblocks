@@ -26,10 +26,10 @@ namespace Game
         {
             #region Setup console
             DisableQuickEdit(null, null);
+            Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Loading Retroblocks\nPlease wait...");
             Console.CursorVisible = false;
-            Console.ForegroundColor = ConsoleColor.Green;
             Config.LoadConfig();
             ConsoleHelper.SetCurrentFont("Consolas", (short)Config.fontSize);
             Console.SetWindowSize(50, 32);
@@ -46,120 +46,154 @@ namespace Game
                 fps = 0;
                 framesThisSecond = 0;
                 #endregion
-
-                while (true)
+                try
                 {
-                    #region Setup game
-                    paused = false;
-                    Levels.Setup();
-                    Piece.Setup();
-                    BagRandomizer.Setup();
-                    Matrix.Setup();
-                    CurrentPiece.Setup();
-                    HoldPiece.Setup();
-                    Drawer.Setup(true);
-                    CurrentPiece.Spawn();
-                    #endregion
-                    #region Run game
-
-                    if (firstRun)
-                    {
-                        frameTimer = new Timer(16);
-                        frameTimer.Elapsed += CurrentPiece.UpdateTimers;
-                        frameTimer.Elapsed += CurrentPiece.UpdateGravity;
-                        frameTimer.Elapsed += CurrentPiece.UpdateLines;
-                        frameTimer.Elapsed += CurrentPiece.MovePiece;
-                        frameTimer.Elapsed += CurrentPiece.SpinPiece;
-                        frameTimer.Elapsed += CurrentPiece.DasPiece;
-                        frameTimer.AutoReset = true;
-                        frameTimer.Enabled = true;
-                        secondTimer = new Timer(1000);
-                        secondTimer.Elapsed += UpdateCounters;
-                        secondTimer.AutoReset = true;
-                        secondTimer.Enabled = true;
-                    }
-                    frameTimer.Enabled = true;
                     while (true)
                     {
-                        
-                        Console.CursorVisible = false;
-                        if (!toppedOut)
+                        #region Setup game
+                        paused = false;
+                        Levels.Setup();
+                        Piece.Setup();
+                        BagRandomizer.Setup();
+                        Matrix.Setup();
+                        CurrentPiece.Setup();
+                        HoldPiece.Setup();
+                        Drawer.Setup(true);
+                        CurrentPiece.Spawn();
+                        #endregion
+                        #region Run game
+
+                        if (firstRun)
                         {
-                            if (!paused)
+                            frameTimer = new Timer(16);
+                            frameTimer.Elapsed += CurrentPiece.UpdateTimers;
+                            frameTimer.Elapsed += CurrentPiece.UpdateGravity;
+                            frameTimer.Elapsed += CurrentPiece.UpdateLines;
+                            frameTimer.Elapsed += CurrentPiece.MovePiece;
+                            frameTimer.Elapsed += CurrentPiece.SpinPiece;
+                            frameTimer.Elapsed += CurrentPiece.DasPiece;
+                            frameTimer.AutoReset = true;
+                            frameTimer.Enabled = true;
+                            secondTimer = new Timer(1000);
+                            secondTimer.Elapsed += UpdateCounters;
+                            secondTimer.AutoReset = true;
+                            secondTimer.Enabled = true;
+                        }
+                        frameTimer.Enabled = true;
+                        while (true)
+                        {
+
+                            Console.CursorVisible = false;
+                            if (!toppedOut)
                             {
-                                framesThisSecond++;
+                                if (!paused)
+                                {
+                                    framesThisSecond++;
+                                }
+                                Drawer.DrawToConsole();
+                                if (frameTimer.Enabled == paused) { frameTimer.Enabled = !paused; }
+                                bool p = NativeKeyboard.IsKeyDown(Config.pause);
+                                if (p && Config.prevFramePresses[8] == false)
+                                {
+                                    paused = !paused;
+                                    Config.prevFramePresses[8] = true;
+                                }
+                                else if ((!p) && Config.prevFramePresses[8] == true)
+                                {
+                                    Config.prevFramePresses[8] = false;
+                                }
+
+                                if (NativeKeyboard.IsKeyDown(Config.retry))
+                                {
+                                    firstRun = false;
+                                    HighScores.SaveScore(CurrentPiece.score);
+                                    break;
+                                }
                             }
-                            Drawer.DrawToConsole();
-                            if (frameTimer.Enabled == paused) { frameTimer.Enabled = !paused; }
-                            bool p = NativeKeyboard.IsKeyDown(Config.pause);
-                            if (p && Config.prevFramePresses[8] == false)
+                            else
                             {
-                                paused = !paused;
-                                Config.prevFramePresses[8] = true;
-                            }
-                            else if ((!p) && Config.prevFramePresses[8] == true)
-                            {
-                                Config.prevFramePresses[8] = false;
+                                if (!clearedConsole)
+                                {
+                                    Console.Clear();
+                                    clearedConsole = true;
+                                    ranking = HighScores.SaveScore(CurrentPiece.score);
+                                }
+                                frameTimer.Enabled = false;
+                                System.Threading.Thread.Sleep(20);
+                                Console.SetCursorPosition(0, 0);
+                                Console.Write(
+                                    $"TOP OUT\n" +
+                                    $"\n" +
+                                    $"Score: {CurrentPiece.score}\n" +
+                                    $"Ranking: {ranking}\n" +
+                                    $"\n" +
+                                    $"\n" +
+                                    $"Lines: {CurrentPiece.lines}\n" +
+                                    $"Level: {CurrentPiece.levelNum}\n" +
+                                    $"{(int)(CurrentPiece.level.g * 1000) / 1000}G {CurrentPiece.level.lockDelay}LD\n" +
+                                    $"{CurrentPiece.level.invisibleTimer} invTimer\n" +
+                                    $"{Config.das} --> {CurrentPiece.level.das} DAS\n" +
+                                    $"{Config.arr} --> {CurrentPiece.level.arr} ARR\n" +
+                                    $"\n" +
+                                    $"\n" +
+                                    $"- Press R to retry\n" +
+                                    $"- Press Esc to return to main menu"
+                                    );
+                                if (NativeKeyboard.IsKeyDown(Config.retry))
+                                {
+                                    Console.Clear();
+                                    toppedOut = false;
+                                    clearedConsole = false;
+                                    break;
+                                }
+                                if (NativeKeyboard.IsKeyDown(Config.pause))
+                                {
+                                    Console.Clear();
+                                    clearedConsole = false;
+                                    break;
+                                }
                             }
 
-                            if (NativeKeyboard.IsKeyDown(Config.retry))
-                            {
-                                firstRun = false;
-                                HighScores.SaveScore(CurrentPiece.score);
-                                break;
-                            }
                         }
-                        else
+                        if (toppedOut)
                         {
-                            if (!clearedConsole)
-                            {
-                                Console.Clear();
-                                clearedConsole = true;
-                                ranking = HighScores.SaveScore(CurrentPiece.score);
-                            }
-                            frameTimer.Enabled = false;
-                            System.Threading.Thread.Sleep(20);
-                            Console.SetCursorPosition(0, 0);
-                            Console.Write(
-                                $"TOP OUT\n" +
-                                $"\n" +
-                                $"Score: {CurrentPiece.score}\n" +
-                                $"Ranking: {ranking}\n" +
-                                $"\n" +
-                                $"\n" +
-                                $"Lines: {CurrentPiece.lines}\n" +
-                                $"Level: {CurrentPiece.levelNum}\n" +
-                                $"{CurrentPiece.level.g}G {CurrentPiece.level.lockDelay}LD\n" +
-                                $"{CurrentPiece.level.invisibleTimer} invTimer\n" +
-                                $"{Config.das} --> {CurrentPiece.level.das} DAS\n" +
-                                $"{Config.arr} --> {CurrentPiece.level.arr} ARR\n" +
-                                $"\n" +
-                                $"\n" +
-                                $"- Press R to retry\n" +
-                                $"- Press Esc to return to main menu"
-                                );
-                            if (NativeKeyboard.IsKeyDown(Config.retry))
-                            {
-                                Console.Clear();
-                                toppedOut = false;
-                                clearedConsole = false;
-                                break;
-                            }
-                            if (NativeKeyboard.IsKeyDown(Config.pause))
-                            {
-                                Console.Clear();
-                                clearedConsole = false;
-                                break;
-                            }
+                            toppedOut = false;
+                            break;
                         }
+                        #endregion
 
                     }
-                    if (toppedOut)
+                }
+                catch(Exception e)
+                {   
+                    if(frameTimer != null)
                     {
-                        toppedOut = false;
-                        break;
+                        frameTimer.Enabled = false;
                     }
-                    #endregion
+                    if(secondTimer != null)
+                    {
+                        secondTimer.Enabled = false;
+                    }
+
+                    Console.BackgroundColor = ConsoleColor.Blue;
+                    Console.ForegroundColor = ConsoleColor.White;
+
+                    Console.Clear();
+
+                    Console.WriteLine($":(\n" +
+                        $"An unhandled exception has occured\nand the game has crashed.\n" +
+                        $"Please send exception details to the developer\nfor bugfixing purposes.\n\n" +
+                        $"Exception details:\n" +
+                        $"Message:\n{e.Message}\nStack Trace:\n{e.StackTrace}\nSource:\n{e.Source}\nData:{e.Data}");
+                    string dataLoc = AppDomain.CurrentDomain.BaseDirectory;
+                    FileStream strm = File.Create(dataLoc + "crash.log");
+                    StreamWriter writer = new StreamWriter(strm);
+                    writer.Write($"Exception occured at {DateTime.UtcNow} UTC (In current timezone: {DateTime.Now})\n\nMessage:\n{e.Message}\n\nStack Trace:\n{e.StackTrace}\n\nSource:\n{e.Source}\n\nData:{e.Data}\n\nString:\n{e}");
+                    writer.Close();
+                    Console.ForegroundColor = ConsoleColor.Magenta;
+                    Console.BackgroundColor = ConsoleColor.DarkBlue;
+                    Console.WriteLine($"\n\nA log file has been created at:\n{dataLoc + "crash.log"}\nPlease send this file to the developer.");
+                    while (true);
                 }
             }
         }
@@ -1391,8 +1425,19 @@ namespace Game
     }
     static class Drawer
     {
+        /// <summary>
+        /// Index: 0: CurrentPiece, 1: 3/4, 2: 1/2, 3: 1/4, 4: Full
+        /// </summary>
+        private static string[] skin
+        {
+            get
+            {
+                return Config.asciiMode ? new string[] { "[]", "{}", "()", "||", "<>" } : new string[] { "[]", "▓▓", "▒▒", "░░", "██" };
+            }
+        }
         private static string[] Picture
         {get{
+            string[] _skin = skin;
             string[] ycache = new string[24];
             string xcache = "";
             for (int y = 0; y < 24; y++)
@@ -1403,38 +1448,38 @@ namespace Game
                         {
                             if (CurrentPiece.level.invisibleTimer == -1 || Matrix.invisTimer[x][y] < 0.25 * CurrentPiece.level.invisibleTimer)
                             {
-                                xcache += "██";
+                                xcache += _skin[4];
                             }
                             else if (Matrix.invisTimer[x][y] >= 0.75 * CurrentPiece.level.invisibleTimer)
                             {
-                                xcache += "░░";
+                                xcache += _skin[3];
                             }
                             else if (Matrix.invisTimer[x][y] >= 0.5 * CurrentPiece.level.invisibleTimer)
                             {
-                                xcache += "▒▒";
+                                xcache += _skin[2];
                             }
                             else if (Matrix.invisTimer[x][y] >= 0.25 * CurrentPiece.level.invisibleTimer)
                             {
-                                xcache += "▓▓";
+                                xcache += _skin[1];
                             }
                         }
                     else if (CurrentPiece.state[x][y] && !CurrentPiece.level.pieceInvisible)
                         {
                             if (CurrentPiece.lockDelayTimer < 0.25 * CurrentPiece.level.lockDelay)
                             {
-                                xcache += "[]";
+                                xcache += _skin[0];
                             }
                             else if (CurrentPiece.lockDelayTimer < 0.5 * CurrentPiece.level.lockDelay)
                             {
-                                xcache += "░░";
+                                xcache += skin[3];
                             }
                             else if (CurrentPiece.lockDelayTimer < 0.75 * CurrentPiece.level.lockDelay)
                             {
-                                xcache += "▒▒";
+                                xcache += skin[2];
                             }
                             else
                             {
-                                xcache += "▓▓";
+                                xcache += _skin[1];
                             }
                         }
                     else if (CurrentPiece.ghost[x][y] && !CurrentPiece.level.pieceInvisible)
@@ -1834,7 +1879,7 @@ namespace Game
             {
                 if (ldr >= 2)
                 {
-                    Console.Write("″");
+                    Console.Write("\"");
                 }
                 else if (ldr == 1)
                 {
@@ -1893,7 +1938,7 @@ namespace Game
             Console.Write($"{CurrentPiece.lastClear}");
             Console.SetCursorPosition(0, 8);
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.Write($"Lvl {CurrentPiece.levelNum}\n{(int)(CurrentPiece.level.g * 100) / 100d}G   \n{CurrentPiece.level.lockDelay}LD     \n\n\n{CurrentPiece.lines}/{(CurrentPiece.levelNum + 1) * 10} lines\n{e}\n\nDelays:\n{CurrentPiece.level.are} Spawn \n{CurrentPiece.level.lineAre} Line \n\n\nScore\n{CurrentPiece.score}");
+            Console.Write($"Lvl {CurrentPiece.levelNum}\n{(int)(CurrentPiece.level.g * 1000) / 1000d}G   \n{CurrentPiece.level.lockDelay}LD     \n\n\n{CurrentPiece.lines}/{(CurrentPiece.levelNum + 1) * 10} lines\n{e}\n\nDelays:\n{CurrentPiece.level.are} Spawn \n{CurrentPiece.level.lineAre} Line \n\n\nScore\n{CurrentPiece.score}");
             Console.SetCursorPosition(0, 29);
             Console.Write($"{Program.fps} FPS, {Program.tps} / 60 TPS");
         }
@@ -2636,12 +2681,7 @@ namespace Game
                         break;
                 }
 
-                // Get GM grade
             }
-            // for(int i = 0; i < 80; i++)
-            // {
-            //     list[i] = new Levels(0, 100000, -1, 1, 1, false, true, 7, 3, 3);
-            // }
         }
     }
     public static class Config
@@ -2658,6 +2698,7 @@ namespace Game
         public static int das;
         public static int arr;
         public static bool useSonicDrop;
+        public static bool asciiMode;
         public static int[] buttons
         {
             get
@@ -2717,6 +2758,7 @@ namespace Game
                     arr = Convert.ToInt32(reader.ReadLine());
                     useSonicDrop = Convert.ToBoolean(reader.ReadLine());
                     fontSize = Convert.ToInt32(reader.ReadLine());
+                    asciiMode = Convert.ToBoolean(reader.ReadLine());
                     reader.Close();
                     // Checks for duplicates
                     if (buttons.Length != buttons.Distinct().Count())
@@ -2754,11 +2796,50 @@ namespace Game
             #endregion
             #region Save
             StreamWriter writer = new StreamWriter(dataLoc + "\\Retroblocks\\config.txt");
-            writer.Write($"{left}\n{right}\n{hardDrop}\n{softDrop}\n{rotCw}\n{rotCcw}\n{rot180}\n{hold}\n{das}\n{arr}\n{useSonicDrop}\n{fontSize}");
+            writer.Write($"{left}\n{right}\n{hardDrop}\n{softDrop}\n{rotCw}\n{rotCcw}\n{rot180}\n{hold}\n{das}\n{arr}\n{useSonicDrop}\n{fontSize}\n{asciiMode}");
             writer.Close();
             #endregion
         }
-        private static void ResetConfig()
+        public static ref int GetButtonRef(int index)
+        {
+            if(index < 0 || index >= buttons.Length)
+            {
+                throw new ArgumentOutOfRangeException("index", index, $"Argument \"index\" must be between 0 and {buttons.Length - 1}, inclusively.");
+            }
+            switch (index) 
+            {
+                case 0:
+                    return ref left;
+                case 1:
+                    return ref right;
+                case 2:
+                    return ref hardDrop;
+                case 3:
+                    return ref softDrop;
+                case 4:
+                    return ref rotCw;
+                case 5:
+                    return ref rotCcw;
+                case 6:
+                    return ref rot180;
+                default:
+                    return ref hold;
+            }
+
+        }
+        public static string GetButtonName(int index)
+        {
+            if (index < 0 || index >= buttons.Length)
+            {
+                throw new ArgumentOutOfRangeException("index", index, $"Argument \"index\" must be between 0 and {buttons.Length - 1}, inclusively.");
+            }
+            return (new string[] { "Left", "Right", "Hard Drop", "Soft Drop", "Rotate Clockwise", "Rotate Counterclockwise", "Rotate 180 degrees", "Swap Hold Piece" })[index];
+        }
+        public static string GetDefaultButtonKeybind(int index)
+        {
+            return (new string[] { "37 Left Arrow", "39 Right Arrow", "32 Space", "40 Down Arrow", "38 Up Arrow", "90 Z", "88 X", "67 C" })[index];
+        }
+        public static void ResetConfig()
         {
             left = 37;
             right = 39;
@@ -2772,6 +2853,7 @@ namespace Game
             arr = 1;
             useSonicDrop = false;
             fontSize = 17;
+            asciiMode = false;
             SaveConfig();
         }
 

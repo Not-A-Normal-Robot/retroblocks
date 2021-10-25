@@ -1,0 +1,16 @@
+Exception occured at 10/25/2021 1:15:37 AM UTC (In current timezone: 10/25/2021 8:15:37 AM)
+
+Message:
+Attempted to divide by zero.
+
+Stack Trace:
+   at Game.Program.Main() in C:\retroblocks\retroblocks\Program.cs:line 55
+
+Source:
+retroblocks
+
+Data:System.Collections.ListDictionaryInternal
+
+String:
+System.DivideByZeroException: Attempted to divide by zero.
+   at Game.Program.Main() in C:\retroblocks\retroblocks\Program.cs:line 55

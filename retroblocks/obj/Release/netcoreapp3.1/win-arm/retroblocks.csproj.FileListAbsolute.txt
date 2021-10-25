@@ -231,7 +231,6 @@ C:\retroblocks\retroblocks\bin\Release\netcoreapp3.1\win-arm\dbgshim.dll
 C:\retroblocks\retroblocks\bin\Release\netcoreapp3.1\win-arm\hostfxr.dll
 C:\retroblocks\retroblocks\bin\Release\netcoreapp3.1\win-arm\hostpolicy.dll
 C:\retroblocks\retroblocks\bin\Release\netcoreapp3.1\win-arm\mscordaccore.dll
-C:\retroblocks\retroblocks\bin\Release\netcoreapp3.1\win-arm\mscordaccore_arm_arm_4.700.21.41101.dll
 C:\retroblocks\retroblocks\bin\Release\netcoreapp3.1\win-arm\mscordbi.dll
 C:\retroblocks\retroblocks\bin\Release\netcoreapp3.1\win-arm\mscorrc.debug.dll
 C:\retroblocks\retroblocks\bin\Release\netcoreapp3.1\win-arm\mscorrc.dll
@@ -244,3 +243,4 @@ C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-arm\retroblocks.csproj.
 C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-arm\retroblocks.dll
 C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-arm\retroblocks.pdb
 C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\win-arm\retroblocks.genruntimeconfig.cache
+C:\retroblocks\retroblocks\bin\Release\netcoreapp3.1\win-arm\mscordaccore_arm_arm_4.700.21.47003.dll

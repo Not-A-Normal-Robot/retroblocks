@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "U8br098bDNF4l1ExwjkUzSdLV1p4exC//NosRU4bLBwb/dl9eDMIqH9uasfozsdVupZ9vLFw0r9H4SFP0XJbIg==",
+  "dgSpecHash": "yanAocELxnvot7JJmcKj0UpBvzin4vPEEQwQnMz645RusqL19rRZx/QlSn1EgEyQKfMRSxzNO0tSdNaqj/BnMg==",
   "success": true,
   "projectFilePath": "C:\\retroblocks\\retroblocks\\retroblocks.csproj",
   "expectedPackageFiles": [
@@ -8,9 +8,9 @@
     "C:\\Users\\ADJIE\\.nuget\\packages\\microsoft.win32.systemevents\\5.0.0\\microsoft.win32.systemevents.5.0.0.nupkg.sha512",
     "C:\\Users\\ADJIE\\.nuget\\packages\\system.drawing.common\\5.0.0\\system.drawing.common.5.0.0.nupkg.sha512",
     "C:\\Users\\ADJIE\\.nuget\\packages\\system.windows.extensions\\5.0.0\\system.windows.extensions.5.0.0.nupkg.sha512",
-    "C:\\Users\\ADJIE\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\3.1.19\\microsoft.netcore.app.runtime.win-x64.3.1.19.nupkg.sha512",
-    "C:\\Users\\ADJIE\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\3.1.19\\microsoft.windowsdesktop.app.runtime.win-x64.3.1.19.nupkg.sha512",
-    "C:\\Users\\ADJIE\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\3.1.19\\microsoft.aspnetcore.app.runtime.win-x64.3.1.19.nupkg.sha512"
+    "C:\\Users\\ADJIE\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\3.1.20\\microsoft.netcore.app.runtime.win-x64.3.1.20.nupkg.sha512",
+    "C:\\Users\\ADJIE\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\3.1.20\\microsoft.windowsdesktop.app.runtime.win-x64.3.1.20.nupkg.sha512",
+    "C:\\Users\\ADJIE\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\3.1.20\\microsoft.aspnetcore.app.runtime.win-x64.3.1.20.nupkg.sha512"
   ],
   "logs": []
 }
