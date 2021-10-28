@@ -2926,7 +2926,7 @@ internal static class NativeKeyboard
     private const int KeyPressed = 0x8000;
 
     /// <summary>
-    /// Returns a value indicating if a given key is pressed.
+    /// Returns a value indicating if a given key is pressed, with a check for application focus.
     /// </summary>
     /// <param name="key">The key to check.</param>
     /// <returns>
@@ -2934,9 +2934,19 @@ internal static class NativeKeyboard
     /// </returns>
     public static bool IsKeyDown(int keycode)
     {
+        return IsKeyDownUniversal(keycode) && Game.Program.IsApplicationFocused();
+    }
+    /// <summary>
+    /// Returns a value indicating if a given key is pressed, ignoring application focus.
+    /// </summary>
+    /// <param name="key">The key to check.</param>
+    /// <returns>
+    /// <c>true</c> if the key is pressed, otherwise <c>false</c>.
+    /// </returns>
+    public static bool IsKeyDownUniversal(int keycode)
+    {
         return (GetKeyState(keycode) & KeyPressed) != 0;
     }
-
     /// <summary>
     /// Gets the key state of a key.
     /// </summary>

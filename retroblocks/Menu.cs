@@ -28,7 +28,7 @@ namespace Menu
         static bool start;
         private static int m;
         /// <summary>
-        /// 0: main menu, 1: control settings, 2: display settings, 3: credits
+        /// 0: main menu, 1: control settings, 2: display settings, 3: credits, 4: mode selection menu
         /// </summary>
         static int menu
         {
@@ -46,12 +46,12 @@ namespace Menu
         /// <summary>
         /// cursorPos shouldn't go above this[menu]
         /// </summary>
-        static readonly int[] cursorLimits = new int[4] { 3, 12, 1, 0 };
+        static readonly int[] cursorLimits = new int[5] { 3, 12, 1, 0, 0 };
         /// <summary>
-        /// left, right, up, down, enter
-        /// </summary>
-        static readonly int[] acceptedInputs = new int[5] { 37, 39, 38, 40, 13 };
-        static int[] prevFrameInputs = new int[5];
+        /// left, right, up, down, enter, escape
+        /// </summary> 
+        static readonly int[] acceptedInputs = new int[6] { 37, 39, 38, 40, 13, 27 };
+        static int[] prevFrameInputs = new int[6];
         public static void Start()
         {
             start = false;
@@ -70,7 +70,7 @@ namespace Menu
                         $"===================\n" +
                         $"||  RETROBLOCKS  ||\n" +
                         $"===================\n\n" +
-                        $"{(cursorPos == 0 ? "> " : "  ")}Start!\n" +
+                        $"{(cursorPos == 0 ? "> " : "  ")}Play\n" +
                         $"\n" +
                         $"\n" +
                         $"Settings:\n" +
@@ -125,6 +125,15 @@ namespace Menu
                         break;
                     case 3:
                         Console.Write(credits);
+                        break;
+                    case 4:
+                        Console.Write(
+                            $"Mode Selection\n" +
+                            $"==============\n" +
+                            $"\n" +
+                            $""
+                            // TO DO
+                            );
                         break;
                 }
 
@@ -198,6 +207,14 @@ namespace Menu
                         prevFrameInputs[4] = 12;
                     }
                     Enter();
+                }
+                if (prevFrameInputs[5] == 1 || prevFrameInputs[5] > 15)
+                {
+                    if (prevFrameInputs[5] > 15)
+                    {
+                        prevFrameInputs[5] = 12;
+                    }
+                    Escape();
                 }
                 #endregion
                 System.Threading.Thread.Sleep(15);
@@ -288,7 +305,7 @@ namespace Menu
                     switch (cursorPos)
                     {
                         case 0:
-                            start = true;
+                            menu = 4;
                             return;
                         default:
                             menu = cursorPos;
@@ -355,6 +372,10 @@ namespace Menu
                     menu = 0;
                     return;
             }
+        }
+        private static void Escape()
+        {
+            menu = 0;
         }
     }
 }
