@@ -23,6 +23,10 @@ namespace Menu
             "User670 (testing on Chinese CMD and Windows Terminal)\n" +
             "\n" +
             "\n" +
+            "Modules\n" +
+            "Colorful.Console\n" +
+            "\n" +
+            "\n" +
             "Press Enter to close";
         static int cursorPos;
         static bool start;
@@ -130,9 +134,9 @@ namespace Menu
                         Console.Write(
                             $"Mode Selection\n" +
                             $"==============\n" +
-                            $"\n" +
-                            $""
-                            // TO DO
+                            $"> Normal\n" +
+                            $"Custom mode loading coming soon!"
+                            // TODO
                             );
                         break;
                 }
@@ -370,6 +374,9 @@ namespace Menu
                     return;
                 case 3:
                     menu = 0;
+                    return;
+                case 4:
+                    start = true;
                     return;
             }
         }

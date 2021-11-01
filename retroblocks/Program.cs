@@ -5,6 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Media;
 using System.Diagnostics;
+using System.Drawing;
+using Console = Colorful.Console;
+using System.Text;
 
 namespace Game
 {
@@ -22,23 +25,41 @@ namespace Game
         public static bool toppedOut;
         private static bool clearedConsole = false;
         private static int ranking;
+        private static string m;
+        public static string menu
+        {
+            get
+            {
+                return m;
+            }
+            set
+            {
+                m = value;
+                Console.Title = $"Retroblocks - {m}";
+            }
+        }
         static void Main()
         {
-            #region Setup console
-            DisableQuickEdit(null, null);
-            Console.BackgroundColor = ConsoleColor.Black;
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Loading Retroblocks\nPlease wait...");
-            Console.CursorVisible = false;
-            Config.LoadConfig();
-            ConsoleHelper.SetCurrentFont("Consolas", (short)Config.fontSize);
-            Console.SetWindowSize(50, 32);
-            Console.SetBufferSize(50, 32);
-            DisableResize();
-            #endregion
-            while (true)
+
+            try
             {
-                #region Main Menu
+                #region Setup console
+
+                DisableQuickEdit(null, null);
+                Console.BackgroundColor = Color.FromArgb(0,0,0);
+                Console.ForegroundColor = Color.FromArgb(0,255,0);
+                Console.WriteLine("Loading Retroblocks\nPlease wait...");
+                Console.CursorVisible = false;
+                Config.LoadConfig();
+                ConsoleHelper.SetCurrentFont("Consolas", (short)Config.fontSize);
+                Console.SetWindowSize(50, 32);
+                Console.SetBufferSize(50, 32);
+                DisableResize();
+                #endregion
+                while (true)
+                {
+                    #region Main Menu
+                menu = "MAIN MENU";
                 Sounds.Setup();
                 Menu.Main.Start();
                 Console.Clear();
@@ -46,8 +67,7 @@ namespace Game
                 fps = 0;
                 framesThisSecond = 0;
                 #endregion
-                try
-                {
+                    menu = "GAME";
                     while (true)
                     {
                         #region Setup game
@@ -62,7 +82,7 @@ namespace Game
                         CurrentPiece.Spawn();
                         #endregion
                         #region Run game
-
+                
                         if (firstRun)
                         {
                             frameTimer = new Timer(16);
@@ -82,7 +102,7 @@ namespace Game
                         frameTimer.Enabled = true;
                         while (true)
                         {
-
+                
                             Console.CursorVisible = false;
                             if (!toppedOut)
                             {
@@ -102,7 +122,7 @@ namespace Game
                                 {
                                     Config.prevFramePresses[8] = false;
                                 }
-
+                
                                 if (NativeKeyboard.IsKeyDown(Config.retry))
                                 {
                                     firstRun = false;
@@ -153,7 +173,7 @@ namespace Game
                                     break;
                                 }
                             }
-
+                
                         }
                         if (toppedOut)
                         {
@@ -161,40 +181,41 @@ namespace Game
                             break;
                         }
                         #endregion
-
                     }
+                }   
+            }
+            catch (Exception e)
+            {
+                #region Crash handler
+                if (frameTimer != null)
+                {
+                    frameTimer.Enabled = false;
                 }
-                catch(Exception e)
-                {   
-                    if(frameTimer != null)
-                    {
-                        frameTimer.Enabled = false;
-                    }
-                    if(secondTimer != null)
-                    {
-                        secondTimer.Enabled = false;
-                    }
-
-                    Console.BackgroundColor = ConsoleColor.Blue;
-                    Console.ForegroundColor = ConsoleColor.White;
-
-                    Console.Clear();
-
-                    Console.WriteLine($":(\n" +
-                        $"An unhandled exception has occured\nand the game has crashed.\n" +
-                        $"Please send exception details to the developer\nfor bugfixing purposes.\n\n" +
-                        $"Exception details:\n" +
-                        $"Message:\n{e.Message}\nStack Trace:\n{e.StackTrace}\nSource:\n{e.Source}\nData:{e.Data}");
-                    string dataLoc = AppDomain.CurrentDomain.BaseDirectory;
-                    FileStream strm = File.Create(dataLoc + "crash.log");
-                    StreamWriter writer = new StreamWriter(strm);
-                    writer.Write($"Exception occured at {DateTime.UtcNow} UTC (In current timezone: {DateTime.Now})\n\nMessage:\n{e.Message}\n\nStack Trace:\n{e.StackTrace}\n\nSource:\n{e.Source}\n\nData:{e.Data}\n\nString:\n{e}");
-                    writer.Close();
-                    Console.ForegroundColor = ConsoleColor.Magenta;
-                    Console.BackgroundColor = ConsoleColor.DarkBlue;
-                    Console.WriteLine($"\n\nA log file has been created at:\n{dataLoc + "crash.log"}\nPlease send this file to the developer.");
-                    while (true);
+                if (secondTimer != null)
+                {
+                    secondTimer.Enabled = false;
                 }
+
+                Console.BackgroundColor = Color.Blue;
+                Console.ForegroundColor = Color.White;
+
+                Console.Clear();
+
+                Console.WriteLine($":(\n" +
+                    $"An unhandled exception has occured\nand the game has crashed.\n" +
+                    $"Please send exception details to the developer\nfor bugfixing purposes.\n\n" +
+                    $"Exception details:\n" +
+                    $"Message:\n{e.Message}\nStack Trace:\n{e.StackTrace}\nSource:\n{e.Source}\nData:{e.Data}");
+                string dataLoc = AppDomain.CurrentDomain.BaseDirectory;
+                FileStream strm = File.Create(dataLoc + "crash.log");
+                StreamWriter writer = new StreamWriter(strm);
+                writer.Write($"Exception occured at {DateTime.UtcNow} UTC (In current timezone: {DateTime.Now})\n\nMessage:\n{e.Message}\n\nStack Trace:\n{e.StackTrace}\n\nSource:\n{e.Source}\n\nData:{e.Data}\n\nString:\n{e}");
+                writer.Close();
+                Console.ForegroundColor = Color.Magenta;
+                Console.BackgroundColor = Color.DarkBlue;
+                Console.WriteLine($"\n\nA log file has been created at:\n{dataLoc + "crash.log"}\nPlease send this file to the developer.");
+                while (true) ;
+                #endregion
             }
         }
         static void UpdateCounters(object o, ElapsedEventArgs _)
@@ -272,22 +293,21 @@ namespace Game
         /// <summary>Returns true if the current application has focus, false otherwise</summary>
         public static bool IsApplicationFocused()
         {
-            var activatedHandle = GetForegroundWindow();
-            if (activatedHandle == IntPtr.Zero)
+            StringBuilder sb = new StringBuilder(256);
+            int handle = GetForegroundWindow();
+            if (GetWindowText(handle, sb, 256) > 0)
             {
-                return false;       // No window is currently activated
+                if (sb.ToString() == $"Retroblocks - {menu}")
+                {
+                    return true;
+                }
             }
-
-            var procId = Process.GetCurrentProcess().Id;
-            int activeProcId;
-            GetWindowThreadProcessId(activatedHandle, out activeProcId);
-
-            return activeProcId == procId;
+            return false;
         }
         [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
-        private static extern IntPtr GetForegroundWindow();
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
+        private static extern int GetForegroundWindow();
+        [DllImport("user32.dll")]
+        static extern int GetWindowText(int hWnd, StringBuilder text, int count);
         #endregion
     }
     public static class Matrix
@@ -308,6 +328,17 @@ namespace Game
                 state[i] = new bool[40];
                 invisTimer[i] = new int[40];
             }
+        }
+        /// <summary>
+        /// Get a mino from the matrix. Out-of-bounds x or y params will make it return true.
+        /// </summary>
+        public static bool GetMino(int x, int y)
+        {
+            if(x < 0 || x > 9 || y < 0 || y > 39)
+            {
+                return true;
+            }
+            return state[x][y];
         }
     }
     public static class CurrentPiece
@@ -391,6 +422,7 @@ namespace Game
         private static bool tried180;
         private static int spawnTries;
         private static bool retryHold;
+        public static bool lastRotate;
         public static int levelNum {
             get
             {
@@ -713,12 +745,14 @@ namespace Game
             lines = 0;
             lockDelayResets = 0;
             btb = false;
+            lastClearBtb = false;
             lastClear = "         ";
             rotated = false;
             triedCw = false;
             triedCcw = false;
             tried180 = false;
             spawnTries = 0;
+            lastRotate = false;
         }
         public static void NextPiece()
         {
@@ -761,11 +795,33 @@ namespace Game
                 }
                 state = newState;
                 yoffset--;
+                lastRotate = false;
             }
         }
         public static void LockPiece(object o, ElapsedEventArgs _)
         {
+            int xoffset = CurrentPiece.xoffset;
+            int yoffset = CurrentPiece.yoffset;
+            Piece piece = Piece.GetPiece(CurrentPiece.piece);
+            char letter = CurrentPiece.piece;
+            int pieceRot = rotState;
             HoldPiece.used = false;
+
+            int miniCorners = 0;
+            int mainCorners = 0;
+            int totalCorners = 0;
+            if(letter != 'O')
+            {
+                for (int i = 0; i < piece.primaryCorners[rotState].Length; i++)
+                {
+                    mainCorners += Matrix.GetMino(piece.primaryCorners[rotState][i].x + xoffset, piece.primaryCorners[rotState][i].y + yoffset) ? 1 : 0;
+                }
+                for (int i = 0; i < piece.secondaryCorners[rotState].Length; i++)
+                {
+                    miniCorners += Matrix.GetMino(piece.secondaryCorners[rotState][i].x + xoffset, piece.secondaryCorners[rotState][i].y + yoffset) ? 1 : 0;
+                }
+                totalCorners = miniCorners + mainCorners;
+            }
             for (int i = 0; i < 40 && !landed; i++)
             {
                 Fall(null, null);
@@ -800,63 +856,253 @@ namespace Game
                     }
                 }
             }
-            switch (linesCleared)
+            if (totalCorners < 3 || !lastRotate)
             {
-                case 0:
-                    lineAreTimer = -1;
-                    combo = -1;
-                    lastClear = "         ";
-                    break;
-                case 1:
-                    lines++;
-                    score += (int)Math.Floor(lines / 10d) * 100;
-                    lineAreTimer = 0;
-                    btb = false;
-                    lastClearBtb = false;
-                    combo++;
-                    lastClear = "Single   ";
-                    Sounds.lineClear1.Play();
-                    break;
-                case 2:
-                    lines += 2;
-                    score += (int)Math.Floor(lines / 10d) * 300;
-                    lineAreTimer = 0;
-                    btb = false;
-                    lastClearBtb = false;
-                    combo++;
-                    lastClear = "Double   ";
-                    Sounds.lineClear2.Play();
-                    break;
-                case 3:
-                    lines += 3;
-                    score += (int)Math.Floor(lines / 10d) * 500;
-                    lineAreTimer = 0;
-                    btb = false;
-                    lastClearBtb = false;
-                    combo++;
-                    lastClear = "Triple   ";
-                    Sounds.lineClear3.Play();
-                    break;
-                case 4:
-                    lines += 4;
-                    if (btb)
-                    {
-                        lastClearBtb = true;
-                        score += (int)Math.Floor(lines / 10d) * 1200;
-                    }
-                    else
-                    {
+                // regular clear
+                switch (linesCleared)
+                {
+                    case 0:
+                        lineAreTimer = -1;
+                        combo = -1;
+                        lastClear = "            ";
+                        break;
+                    case 1:
+                        score += (int)Math.Floor(lines / 10d) * 100;
+                        lines++;
+                        lineAreTimer = 0;
+                        btb = false;
                         lastClearBtb = false;
-                        score += (int)Math.Floor(lines / 10d) * 800;
-                    }
-                    lineAreTimer = 0;
-                    btb = true;
-                    combo++;
-                    lastClear = "Quadruple";
-                    Sounds.lineClear4.Play();
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("5+ line clear!");
+                        combo++;
+                        lastClear = "Single      ";
+                        Sounds.lineClear1.Play();
+                        break;
+                    case 2:
+                        score += (int)Math.Floor(lines / 10d) * 300;
+                        lines += 2;
+                        lineAreTimer = 0;
+                        btb = false;
+                        lastClearBtb = false;
+                        combo++;
+                        lastClear = "Double      ";
+                        Sounds.lineClear2.Play();
+                        break;
+                    case 3:
+                        score += (int)Math.Floor(lines / 10d) * 500;
+                        lines += 3;
+                        lineAreTimer = 0;
+                        btb = false;
+                        lastClearBtb = false;
+                        combo++;
+                        lastClear = "Triple      ";
+                        Sounds.lineClear3.Play();
+                        break;
+                    case 4:
+                        if (btb)
+                        {
+                            lastClearBtb = true;
+                            score += (int)Math.Floor(lines / 10d) * 1200;
+                        }
+                        else
+                        {
+                            lastClearBtb = false;
+                            score += (int)Math.Floor(lines / 10d) * 800;
+                        }
+                        lines += 4;
+                        lineAreTimer = 0;
+                        btb = true;
+                        combo++;
+                        lastClear = "Quadruple   ";
+                        Sounds.lineClear4.Play();
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException("linesCleared", "5+ line clear!");
+                }
+            }
+            else if (mainCorners >= 2 && totalCorners > 2)
+            {
+                // spin
+                switch (linesCleared)
+                {
+                    case 0:
+                        lineAreTimer = -1;
+                        combo = -1;
+                        score += 400 * levelNum;
+                        lastClear = $"{letter}-Spin      ";
+                        Sounds.spin.Play();
+                        break;
+                    case 1:
+
+                        if (btb)
+                        {
+                            lastClearBtb = true;
+                            score += (int)Math.Floor(lines / 10d) * 1200;
+                        }
+                        else
+                        {
+                            lastClearBtb = false;
+                            score += (int)Math.Floor(lines / 10d) * 800;
+                        }
+                        lineAreTimer = 0;
+                        combo++;
+                        lines++;
+                        lastClear = $"{letter}-Spin 1    ";
+                        btb = true;
+                        Sounds.spin.Play();
+                        Sounds.lineClear1.Play();
+                        break;
+                    case 2:
+                        if (btb)
+                        {
+                            lastClearBtb = true;
+                            score += (int)Math.Floor(lines / 10d) * 1800;
+                        }
+                        else
+                        {
+                            lastClearBtb = false;
+                            score += (int)Math.Floor(lines / 10d) * 1200;
+                        }
+                        lineAreTimer = 0;
+                        combo++;
+                        lines += 2;
+                        lastClear = $"{letter}-Spin 2    ";
+                        btb = true;
+                        Sounds.spin.Play();
+                        Sounds.lineClear2.Play();
+                        break;
+                    case 3:
+                        if (btb)
+                        {
+                            lastClearBtb = true;
+                            score += (int)Math.Floor(lines / 10d) * 2400;
+                        }
+                        else
+                        {
+                            lastClearBtb = false;
+                            score += (int)Math.Floor(lines / 10d) * 1600;
+                        }
+                        lineAreTimer = 0;
+                        combo++;
+                        lines += 3;
+                        lastClear = $"{letter}-Spin 3    ";
+                        btb = true;
+                        Sounds.spin.Play();
+                        Sounds.lineClear3.Play();
+                        break;
+                    case 4:
+                        if (btb)
+                        {
+                            lastClearBtb = true;
+                            score += (int)Math.Floor(lines / 10d) * 3000;
+                        }
+                        else
+                        {
+                            lastClearBtb = false;
+                            score += (int)Math.Floor(lines / 10d) * 2000;
+                        }
+                        lineAreTimer = 0;
+                        combo++;
+                        lines += 4;
+                        lastClear = $"{letter}-Spin 4    ";
+                        btb = true;
+                        Sounds.spin.Play();
+                        Sounds.lineClear4.Play();
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException("linesCleared", "5+ line clear!");
+                }
+            }
+            else if (mainCorners < 2 && totalCorners > 2)
+            {
+                // mini spin
+                switch (linesCleared)
+                {
+                    case 0:
+                        lineAreTimer = -1;
+                        combo = -1;
+                        score += 100 * levelNum;
+                        lastClear = $"{letter}-Spin Mini ";
+                        Sounds.spin.Play();
+                        break;
+                    case 1:
+
+                        if (btb)
+                        {
+                            lastClearBtb = true;
+                            score += (int)Math.Floor(lines / 10d) * 300;
+                        }
+                        else
+                        {
+                            lastClearBtb = false;
+                            score += (int)Math.Floor(lines / 10d) * 200;
+                        }
+                        lineAreTimer = 0;
+                        combo++;
+                        lines++;
+                        lastClear = $"{letter}-Mini 1    ";
+                        btb = true;
+                        Sounds.spin.Play();
+                        Sounds.lineClear1.Play();
+                        break;
+                    case 2:
+                        if (btb)
+                        {
+                            lastClearBtb = true;
+                            score += (int)Math.Floor(lines / 10d) * 600;
+                        }
+                        else
+                        {
+                            lastClearBtb = false;
+                            score += (int)Math.Floor(lines / 10d) * 400;
+                        }
+                        lineAreTimer = 0;
+                        combo++;
+                        lines += 2;
+                        lastClear = $"{letter}-Mini 2    ";
+                        btb = true;
+                        Sounds.spin.Play();
+                        Sounds.lineClear2.Play();
+                        break;
+                    case 3:
+                        if (btb)
+                        {
+                            lastClearBtb = true;
+                            score += (int)Math.Floor(lines / 10d) * 900;
+                        }
+                        else
+                        {
+                            lastClearBtb = false;
+                            score += (int)Math.Floor(lines / 10d) * 600;
+                        }
+                        lineAreTimer = 0;
+                        combo++;
+                        lines += 3;
+                        lastClear = $"{letter}-Mini 3    ";
+                        btb = true;
+                        Sounds.spin.Play();
+                        Sounds.lineClear3.Play();
+                        break;
+                    case 4:
+                        if (btb)
+                        {
+                            lastClearBtb = true;
+                            score += (int)Math.Floor(lines / 10d) * 1200;
+                        }
+                        else
+                        {
+                            lastClearBtb = false;
+                            score += (int)Math.Floor(lines / 10d) * 800;
+                        }
+                        lineAreTimer = 0;
+                        combo++;
+                        lines += 4;
+                        lastClear = $"{letter}-Mini 4    ";
+                        btb = true;
+                        Sounds.spin.Play();
+                        Sounds.lineClear4.Play();
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException("linesCleared", "5+ line clear!");
+                }
             }
             if (combo > 0)
             {
@@ -939,7 +1185,7 @@ namespace Game
             if (NativeKeyboard.IsKeyDown(Config.hardDrop) && !Config.prevFramePresses[2]) { LockPiece(null, null); }
             leftoverG = 0;
             lockDelayTimer = 0;
-
+            lastRotate = false;
         }
         public static void Left()
         {
@@ -1002,6 +1248,7 @@ namespace Game
                 {
                     UpdateGhost();
                 }
+                lastRotate = false;
             }
         }
         public static void Right()
@@ -1065,6 +1312,7 @@ namespace Game
                 {
                     UpdateGhost();
                 }
+                lastRotate = false;
             }
         }
         public static void RotCW()
@@ -1138,6 +1386,7 @@ namespace Game
                 CurrentPiece.rotated = true;
                 xoffset += kickUsed.x;
                 yoffset += kickUsed.y;
+                lastRotate = true;
             }
         }
         public static void RotCCW()
@@ -1211,6 +1460,7 @@ namespace Game
                 CurrentPiece.rotated = true;
                 xoffset += kickUsed.x;
                 yoffset += kickUsed.y;
+                lastRotate = true;
             }
         }
         public static void Rot180()
@@ -1284,11 +1534,9 @@ namespace Game
                 CurrentPiece.rotated = true;
                 xoffset += kickUsed.x;
                 yoffset += kickUsed.y;
+                lastRotate = true;
             }
         }
-        /// <summary>
-        /// Hold.
-        /// </summary>
         /// <returns>Success state (false = unsuccessful)</returns>
         public static bool Hold()
         {
@@ -1380,6 +1628,7 @@ namespace Game
                 HoldPiece.used = true;
                 if (NativeKeyboard.IsKeyDown(Config.hardDrop) && !Config.prevFramePresses[2]) { LockPiece(null, null); }
             }
+            lastRotate = false;
             return true;
         }
         /// <summary>
@@ -1534,7 +1783,7 @@ namespace Game
         public static void Setup(bool doStartAnimation)
         {
             Console.SetCursorPosition(0, 0);
-            Console.ForegroundColor = ConsoleColor.Green;
+            Console.ForegroundColor = Color.FromArgb(0, 255, 0);
             Console.Write(
   /* 0*/         $"HOLD        |                    |    NEXT\n" +
   /* 1*/         $"            |                    |\n" +
@@ -1563,7 +1812,7 @@ namespace Game
                 //   0123456789012345678901234567890123456
                 //   0         10        20        30
                 );
-            Console.ForegroundColor = ConsoleColor.Red;
+            Console.ForegroundColor = Color.FromArgb(255, 0, 0);
             for (int i = 0; i < 4; i++)
             {
                 Console.SetCursorPosition(12, i);
@@ -1748,18 +1997,18 @@ namespace Game
                 Console.SetCursorPosition(13, i);
                 if (j == 23)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.ForegroundColor = Color.FromArgb(255, 0, 0);
                 }
                 else if (j == 19)
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.ForegroundColor = Color.FromArgb(0, 255, 0);
                 }
                 Console.Write(Picture[j]);
             }
         }
         private static void DrawHoldPiece()
         {
-            Console.ForegroundColor = ConsoleColor.Green;
+            Console.ForegroundColor = Color.FromArgb(0, 255, 0);
             bool[][] _;
             if (CurrentPiece.level.hold)
             {
@@ -1781,6 +2030,7 @@ namespace Game
         }
         private static void DrawNextPieces()
         {
+            // TODO: limit next pieces with CurrentPiece.level.nextPieces
             Console.SetCursorPosition(36, 2);
             Console.Write(GetMinos(CurrentPiece.GetFuturePiece(0).piece[0][1]));
 
@@ -1963,13 +2213,13 @@ namespace Game
                     break;
             }
             Console.SetCursorPosition(0, 5);
-            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.ForegroundColor = Color.FromArgb(255, 255, 0);
             Console.Write($"{(CurrentPiece.lastClearBtb ? "Back To Back" : "            ")}");
             Console.SetCursorPosition(0, 6);
-            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.ForegroundColor = Color.FromArgb(0, 255, 255);
             Console.Write($"{CurrentPiece.lastClear}");
             Console.SetCursorPosition(0, 8);
-            Console.ForegroundColor = ConsoleColor.Green;
+            Console.ForegroundColor = Color.FromArgb(0, 255, 0);
             Console.Write($"Lvl {CurrentPiece.levelNum}\n{(CurrentPiece.level.g != double.PositiveInfinity ? (int)(CurrentPiece.level.g * 1000) / 1000d + "G    " : "Infinite G")}\n{CurrentPiece.level.lockDelay}LD     \n\n\n{CurrentPiece.lines}/{(CurrentPiece.levelNum + 1) * 10} lines\n{e}\n\nDelays:\n{CurrentPiece.level.are} Spawn \n{CurrentPiece.level.lineAre} Line \n\n\nScore\n{CurrentPiece.score}");
             Console.SetCursorPosition(0, 29);
             Console.Write($"{Program.fps} FPS, {Program.tps} / 60 TPS");
@@ -2062,11 +2312,6 @@ namespace Game
     }
     public class Piece
     {
-        //            WARNING
-
-        //    Corner detection systems
-        //          incomplete.
-
         #region Data
         /// <summary>
         /// The state for the piece. [rot state], [y], [x]
@@ -2079,15 +2324,16 @@ namespace Game
             new bool[5][] { new bool[5], new bool[5], new bool[5], new bool[5], new bool[5] }, // ccw
         }; // States for each rotation
         /// <summary>
-        /// Corners to detect for spin detection. 0, 0 is bottom left.
+        /// Corners to detect for spin detection. 0, 0 is bottom left. Usage: primaryCorners[rotState][num]
         /// </summary>
-        public Vector2D[] primaryCorners; // Check corners for spin
-        public Vector2D[] secondaryCorners;
+        public Vector2D[][] primaryCorners; // Check corners for spin
+        public Vector2D[][] secondaryCorners;
         public Vector2D[][] cwKicks; // Clockwise kicks
         public Vector2D[][] ccwKicks; // Counterclockwise kicks
         public Vector2D[][] flipKicks; // 180 degree kicks
+        public Color color;
         #endregion
-        public Piece(bool[][][] piece, Vector2D[][] cwKicks, Vector2D[][] ccwKicks, Vector2D[][] flipKicks, Vector2D[] primaryCorners, Vector2D[] secondaryCorners)
+        public Piece(bool[][][] piece, Vector2D[][] cwKicks, Vector2D[][] ccwKicks, Vector2D[][] flipKicks, Vector2D[][] primaryCorners, Vector2D[][] secondaryCorners, Color color)
         {
             this.piece = piece;
             this.cwKicks = cwKicks;
@@ -2095,6 +2341,7 @@ namespace Game
             this.flipKicks = flipKicks;
             this.primaryCorners = primaryCorners;
             this.secondaryCorners = secondaryCorners;
+            this.color = color;
         }
         #region Piece List
         public static Piece Z;
@@ -2167,7 +2414,8 @@ namespace Game
                 }
                 #endregion
                 #region Corner detection
-                ,null, null // TODO
+                , new Vector2D[][] { new Vector2D[] { new Vector2D(1, 1), new Vector2D(3, 1) }, new Vector2D[] { new Vector2D(1, 1), new Vector2D(1, 3) }, new Vector2D[] { new Vector2D(1, 3), new Vector2D(3, 3) }, new Vector2D[] { new Vector2D(3, 1), new Vector2D(3, 3) } }
+                , new Vector2D[][] { new Vector2D[] { new Vector2D(1, 3), new Vector2D(3, 3) }, new Vector2D[] { new Vector2D(3, 1), new Vector2D(3, 3) }, new Vector2D[] { new Vector2D(1, 1), new Vector2D(3, 1) }, new Vector2D[] { new Vector2D(1, 1), new Vector2D(1, 3) } }, Color.FromArgb(255,0,0)
                 #endregion
                 );
             #endregion
@@ -2230,7 +2478,8 @@ namespace Game
                 }
                 #endregion
                 #region Corner detection
-                , null, null // TODO
+              , new Vector2D[][] { new Vector2D[] { new Vector2D(1, 3), new Vector2D(2, 3) }, new Vector2D[] { new Vector2D(3, 2), new Vector2D(3, 3) }, new Vector2D[] { new Vector2D(2, 1), new Vector2D(3, 1) }, new Vector2D[] { new Vector2D(1, 1), new Vector2D(1, 2) } },
+                new Vector2D[][] { new Vector2D[] { new Vector2D(1, 1), new Vector2D(3, 1) }, new Vector2D[] { new Vector2D(1, 1), new Vector2D(1, 3) }, new Vector2D[] { new Vector2D(1, 3), new Vector2D(3, 3) }, new Vector2D[] { new Vector2D(3, 1), new Vector2D(3, 3) } }, Color.FromArgb(255, 128, 0)
                 #endregion
                 );
             #endregion
@@ -2292,7 +2541,7 @@ namespace Game
                 }
                 #endregion
                 #region Corner detection
-                , null, null // TODO
+                , new Vector2D[][] { new Vector2D[] { new Vector2D(0,0) } }, new Vector2D[][] { new Vector2D[] { new Vector2D(0, 0) } }, Color.FromArgb(255, 255, 0)
                 #endregion
                 );
             #endregion
@@ -2354,7 +2603,8 @@ namespace Game
                 }
                 #endregion
                 #region Corner detection
-                , null, null // TODO
+              , new Vector2D[][] { new Vector2D[] { new Vector2D(1, 3), new Vector2D(3, 2) }, new Vector2D[] { new Vector2D(2, 1), new Vector2D(3, 3) }, new Vector2D[] { new Vector2D(1, 2), new Vector2D(3, 1) }, new Vector2D[] { new Vector2D(1, 1), new Vector2D(2, 3) } }
+              , new Vector2D[][] { new Vector2D[] { new Vector2D(0, 2), new Vector2D(4, 3) }, new Vector2D[] { new Vector2D(3, 0), new Vector2D(2, 4) }, new Vector2D[] { new Vector2D(0, 1), new Vector2D(4, 2) }, new Vector2D[] { new Vector2D(2, 0), new Vector2D(1, 4) } }, Color.FromArgb(0, 255, 0)
                 #endregion
                 );
             #endregion
@@ -2416,7 +2666,8 @@ namespace Game
                 }
                 #endregion
                 #region Corner detection
-                , null, null // TODO
+              , new Vector2D[][] { new Vector2D[] { new Vector2D(2, 1), new Vector2D(3, 1), new Vector2D(2, 3), new Vector2D(3, 3) }, new Vector2D[] { new Vector2D(2, 1), new Vector2D(2, 2), new Vector2D(4, 1), new Vector2D(4, 2) }, new Vector2D[] { new Vector2D(2, 0), new Vector2D(3, 0), new Vector2D(2, 2), new Vector2D(3, 2) }, new Vector2D[] { new Vector2D(1, 1), new Vector2D(1, 2), new Vector2D(3, 1), new Vector2D(3, 2) } }
+              , new Vector2D[][] {new Vector2D[] {new Vector2D(0, 2), new Vector2D(5, 2) }, new Vector2D[] {new Vector2D(3,-1), new Vector2D(3, 5) }, new Vector2D[]{new Vector2D(0, 1), new Vector2D(5, 1) }, new Vector2D[]{new Vector2D(2,-1), new Vector2D(2, 5) }}, Color.FromArgb(0, 255, 255)
                 #endregion
                 );
             #endregion
@@ -2478,7 +2729,8 @@ namespace Game
                 }
                 #endregion
                 #region Corner detection
-                , null, null // TODO
+              , new Vector2D[][] { new Vector2D[] { new Vector2D(2, 3), new Vector2D(3, 3)}, new Vector2D[] {new Vector2D(3, 1), new Vector2D(3, 2)}, new Vector2D[] {new Vector2D(1, 1), new Vector2D(2, 1)}, new Vector2D[] {new Vector2D(1, 2), new Vector2D(1, 3)}}
+              , new Vector2D[][] { new Vector2D[] { new Vector2D(1, 1), new Vector2D(3, 1) }, new Vector2D[] { new Vector2D(1, 1), new Vector2D(1, 3) }, new Vector2D[] { new Vector2D(1, 3), new Vector2D(3, 3) }, new Vector2D[] { new Vector2D(3, 1), new Vector2D(3, 3) } }, Color.FromArgb(0, 0, 255)
                 #endregion
                 );
             #endregion
@@ -2540,7 +2792,9 @@ namespace Game
                 }
                 #endregion
                 #region Corner detection
-                , null, null // TODO
+              , new Vector2D[][] { new Vector2D[] { new Vector2D(1, 3), new Vector2D(3, 3) }, new Vector2D[] { new Vector2D(3, 1), new Vector2D(3, 3) }, new Vector2D[] { new Vector2D(1, 1), new Vector2D(3, 1) }, new Vector2D[] { new Vector2D(1, 1), new Vector2D(1, 3) } }
+              , new Vector2D[][] { new Vector2D[] {new Vector2D(1, 1), new Vector2D(3, 1)}, new Vector2D[] {new Vector2D(1, 1), new Vector2D(1, 3)}, new Vector2D[] {new Vector2D(1, 3), new Vector2D(3, 3)}, new Vector2D[] {new Vector2D(3, 1), new Vector2D(3, 3)}}
+              , Color.FromArgb(128, 0, 128)
                 #endregion
                 );
             #endregion
@@ -2597,8 +2851,9 @@ namespace Game
                     new Vector2D[1] { new Vector2D(0, 0) },
                     new Vector2D[1] { new Vector2D(0, 0) },
                 },
-                new Vector2D[1] { new Vector2D(0, 0) },
-                new Vector2D[1] { new Vector2D(0, 0) }
+                new Vector2D[1][] { new Vector2D[1] { new Vector2D(0, 0) } },
+                new Vector2D[1][] { new Vector2D[1] { new Vector2D(0, 0) } },
+                Color.White
                 );
             #endregion
             #endregion
@@ -2896,6 +3151,7 @@ namespace Game
         public static SoundPlayer lineClear3;
         public static SoundPlayer lineClear4;
         public static SoundPlayer topOut;
+        public static SoundPlayer spin;
 
         public static void Setup()
         {
@@ -2904,11 +3160,13 @@ namespace Game
             lineClear3 = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\lineclear3.wav");
             lineClear4 = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\lineclear4.wav");
             topOut     = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\topout.wav"    );
-            lineClear1.LoadAsync();
-            lineClear2.LoadAsync();
-            lineClear3.LoadAsync();
-            lineClear4.LoadAsync();
-            topOut    .LoadAsync();
+            spin       = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\tspin.wav"     );
+            lineClear1.Load();
+            lineClear2.Load();
+            lineClear3.Load();
+            lineClear4.Load();
+            topOut    .Load();
+            spin      .Load();
         }
     }
 

@@ -54,3 +54,4 @@ C:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.csproj.CoreCompil
 C:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.dll
 C:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.pdb
 C:\retroblocks\retroblocks\obj\Debug\netcoreapp3.1\retroblocks.genruntimeconfig.cache
+C:\retroblocks\retroblocks\bin\Debug\netcoreapp3.1\Colorful.Console.dll
