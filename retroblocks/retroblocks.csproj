@@ -16,7 +16,10 @@
     <None Remove="sfx\tspin.wav" />
   </ItemGroup>
 
-
+  <ItemGroup>
+	<FrameworkReference Include="Microsoft.WindowsDesktop.App"/>
+  </ItemGroup>
+	
   <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
@@ -48,6 +51,15 @@
     <Content Include="sfx\tspin.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="PresentationCore">
+      <HintPath>..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\PresentationCore.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Presentation">
+      <HintPath>..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\System.Windows.Presentation.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

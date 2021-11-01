@@ -1,6 +1,5 @@
 ##: primary: if any of these are unoccupied then its a mini
 **: secondary: counts toward 3-4 corner rule
-whoops i flipped them
 
 +----------+        +----------+         +----------+         +----------+
 | . . . . .|        | . . . . .|         | . . . . .|         | . . . . .|

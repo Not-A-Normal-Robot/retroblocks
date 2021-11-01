@@ -4,10 +4,10 @@ using System.Runtime.InteropServices;
 using System.IO;
 using System.Linq;
 using System.Media;
-using System.Diagnostics;
-using System.Drawing;
-using Console = Colorful.Console;
 using System.Text;
+using System.Windows.Media;
+using Console = Colorful.Console;
+using Color = System.Drawing.Color;
 
 namespace Game
 {
@@ -26,6 +26,7 @@ namespace Game
         private static bool clearedConsole = false;
         private static int ranking;
         private static string m;
+        public static int mainThreadId;
         public static string menu
         {
             get
@@ -40,11 +41,9 @@ namespace Game
         }
         static void Main()
         {
-
             try
             {
                 #region Setup console
-
                 DisableQuickEdit(null, null);
                 Console.BackgroundColor = Color.FromArgb(0,0,0);
                 Console.ForegroundColor = Color.FromArgb(0,255,0);
@@ -55,18 +54,19 @@ namespace Game
                 Console.SetWindowSize(50, 32);
                 Console.SetBufferSize(50, 32);
                 DisableResize();
+                mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
                 #endregion
                 while (true)
                 {
                     #region Main Menu
-                menu = "MAIN MENU";
-                Sounds.Setup();
-                Menu.Main.Start();
-                Console.Clear();
-                tps = 0;
-                fps = 0;
-                framesThisSecond = 0;
-                #endregion
+                    menu = "MAIN MENU";
+                    Sounds.Setup();
+                    Menu.Main.Start();
+                    Console.Clear();
+                    tps = 0;
+                    fps = 0;
+                    framesThisSecond = 0;
+                    #endregion
                     menu = "GAME";
                     while (true)
                     {
@@ -173,7 +173,7 @@ namespace Game
                                     break;
                                 }
                             }
-                
+                            Sounds.UpdateSound(); 
                         }
                         if (toppedOut)
                         {
@@ -461,7 +461,7 @@ namespace Game
                 }
                 leftoverG = 0;
             }
-            else
+            else if(lockDelayResets < 30)
             {
                 lockDelayTimer = 0;
             }
@@ -856,6 +856,10 @@ namespace Game
                     }
                 }
             }
+            if(Math.Floor((lines + linesCleared) / 10d) > Math.Floor(lines / 10d))
+            {
+                Sounds.PlaySound(6);
+            }
             if (totalCorners < 3 || !lastRotate)
             {
                 // regular clear
@@ -864,7 +868,7 @@ namespace Game
                     case 0:
                         lineAreTimer = -1;
                         combo = -1;
-                        lastClear = "            ";
+                        lastClear = "            \n         ";
                         break;
                     case 1:
                         score += (int)Math.Floor(lines / 10d) * 100;
@@ -873,8 +877,8 @@ namespace Game
                         btb = false;
                         lastClearBtb = false;
                         combo++;
-                        lastClear = "Single      ";
-                        Sounds.lineClear1.Play();
+                        lastClear = "Single      \n         ";
+                        Sounds.PlaySound(0);
                         break;
                     case 2:
                         score += (int)Math.Floor(lines / 10d) * 300;
@@ -883,8 +887,8 @@ namespace Game
                         btb = false;
                         lastClearBtb = false;
                         combo++;
-                        lastClear = "Double      ";
-                        Sounds.lineClear2.Play();
+                        lastClear = "Double      \n         ";
+                        Sounds.PlaySound(1);
                         break;
                     case 3:
                         score += (int)Math.Floor(lines / 10d) * 500;
@@ -893,8 +897,8 @@ namespace Game
                         btb = false;
                         lastClearBtb = false;
                         combo++;
-                        lastClear = "Triple      ";
-                        Sounds.lineClear3.Play();
+                        lastClear = "Triple      \n         ";
+                        Sounds.PlaySound(2);
                         break;
                     case 4:
                         if (btb)
@@ -911,8 +915,8 @@ namespace Game
                         lineAreTimer = 0;
                         btb = true;
                         combo++;
-                        lastClear = "Quadruple   ";
-                        Sounds.lineClear4.Play();
+                        lastClear = "Quadruple   \n         ";
+                        Sounds.PlaySound(3);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException("linesCleared", "5+ line clear!");
@@ -921,14 +925,14 @@ namespace Game
             else if (mainCorners >= 2 && totalCorners > 2)
             {
                 // spin
+                Sounds.PlaySound(5);
                 switch (linesCleared)
                 {
                     case 0:
                         lineAreTimer = -1;
                         combo = -1;
                         score += 400 * levelNum;
-                        lastClear = $"{letter}-Spin      ";
-                        Sounds.spin.Play();
+                        lastClear = $"{letter}-Spin      \n         ";
                         break;
                     case 1:
 
@@ -945,10 +949,9 @@ namespace Game
                         lineAreTimer = 0;
                         combo++;
                         lines++;
-                        lastClear = $"{letter}-Spin 1    ";
+                        lastClear = $"{letter}-Spin      \nSingle   ";
                         btb = true;
-                        Sounds.spin.Play();
-                        Sounds.lineClear1.Play();
+                        Sounds.PlaySound(0);
                         break;
                     case 2:
                         if (btb)
@@ -964,10 +967,9 @@ namespace Game
                         lineAreTimer = 0;
                         combo++;
                         lines += 2;
-                        lastClear = $"{letter}-Spin 2    ";
+                        lastClear = $"{letter}-Spin      \nDouble   ";
                         btb = true;
-                        Sounds.spin.Play();
-                        Sounds.lineClear2.Play();
+                        Sounds.PlaySound(1);
                         break;
                     case 3:
                         if (btb)
@@ -983,10 +985,9 @@ namespace Game
                         lineAreTimer = 0;
                         combo++;
                         lines += 3;
-                        lastClear = $"{letter}-Spin 3    ";
+                        lastClear = $"{letter}-Spin      \nTriple   ";
                         btb = true;
-                        Sounds.spin.Play();
-                        Sounds.lineClear3.Play();
+                        Sounds.PlaySound(2);
                         break;
                     case 4:
                         if (btb)
@@ -1002,10 +1003,9 @@ namespace Game
                         lineAreTimer = 0;
                         combo++;
                         lines += 4;
-                        lastClear = $"{letter}-Spin 4    ";
+                        lastClear = $"{letter}-Spin      \nQuadruple";
                         btb = true;
-                        Sounds.spin.Play();
-                        Sounds.lineClear4.Play();
+                        Sounds.PlaySound(3);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException("linesCleared", "5+ line clear!");
@@ -1014,14 +1014,14 @@ namespace Game
             else if (mainCorners < 2 && totalCorners > 2)
             {
                 // mini spin
+                Sounds.PlaySound(5);
                 switch (linesCleared)
                 {
                     case 0:
                         lineAreTimer = -1;
                         combo = -1;
                         score += 100 * levelNum;
-                        lastClear = $"{letter}-Spin Mini ";
-                        Sounds.spin.Play();
+                        lastClear = $"Mini {letter}-spin \n         ";
                         break;
                     case 1:
 
@@ -1038,10 +1038,9 @@ namespace Game
                         lineAreTimer = 0;
                         combo++;
                         lines++;
-                        lastClear = $"{letter}-Mini 1    ";
+                        lastClear = $"Mini {letter}-spin \nSingle   ";
                         btb = true;
-                        Sounds.spin.Play();
-                        Sounds.lineClear1.Play();
+                        Sounds.PlaySound(0);
                         break;
                     case 2:
                         if (btb)
@@ -1057,10 +1056,9 @@ namespace Game
                         lineAreTimer = 0;
                         combo++;
                         lines += 2;
-                        lastClear = $"{letter}-Mini 2    ";
+                        lastClear = $"Mini {letter}-spin \nDouble   ";
                         btb = true;
-                        Sounds.spin.Play();
-                        Sounds.lineClear2.Play();
+                        Sounds.PlaySound(1);
                         break;
                     case 3:
                         if (btb)
@@ -1076,10 +1074,9 @@ namespace Game
                         lineAreTimer = 0;
                         combo++;
                         lines += 3;
-                        lastClear = $"{letter}-Mini 3    ";
+                        lastClear = $"Mini {letter}-spin \nTriple   ";
                         btb = true;
-                        Sounds.spin.Play();
-                        Sounds.lineClear3.Play();
+                        Sounds.PlaySound(2);
                         break;
                     case 4:
                         if (btb)
@@ -1093,12 +1090,11 @@ namespace Game
                             score += (int)Math.Floor(lines / 10d) * 800;
                         }
                         lineAreTimer = 0;
+                        btb = true;
                         combo++;
                         lines += 4;
-                        lastClear = $"{letter}-Mini 4    ";
-                        btb = true;
-                        Sounds.spin.Play();
-                        Sounds.lineClear4.Play();
+                        lastClear = $"Mini {letter}-spin \nQuadruple";
+                        Sounds.PlaySound(3);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException("linesCleared", "5+ line clear!");
@@ -1146,7 +1142,7 @@ namespace Game
                 {
                     if (spawnTries >= 60)
                     {
-                        Sounds.topOut.Play();
+                        Sounds.PlaySound(4);
                         Console.Clear();
                         Program.toppedOut = true;
                         return;
@@ -2883,6 +2879,7 @@ namespace Game
     }
     public class Levels
     {
+        private const bool debug = true;
         public double g;
         public int lockDelay;
         public int invisibleTimer;
@@ -2966,6 +2963,12 @@ namespace Game
                     default:
                         list[i] = new Levels(double.PositiveInfinity, 6, 0, 2, 4, true, false, 0, 3, 3);
                         break;
+                }
+                if (debug)
+                {
+                    #pragma warning disable CS0162
+                    list[i] = new Levels(0, 240, -1, 2, 2, false, true, 6, 20, 15);
+                    #pragma warning restore CS0162
                 }
             }
         }
@@ -3146,27 +3149,74 @@ namespace Game
     }
     public static class Sounds
     {
-        public static SoundPlayer lineClear1;
-        public static SoundPlayer lineClear2;
-        public static SoundPlayer lineClear3;
-        public static SoundPlayer lineClear4;
-        public static SoundPlayer topOut;
-        public static SoundPlayer spin;
-
+        public static MediaPlayer lineClear1;
+        public static MediaPlayer lineClear2;
+        public static MediaPlayer lineClear3;
+        public static MediaPlayer lineClear4;
+        public static MediaPlayer topOut;
+        public static MediaPlayer spin;
+        public static MediaPlayer levelUp;
+        private static bool[] toPlay;
         public static void Setup()
         {
-            lineClear1 = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\lineclear1.wav");
-            lineClear2 = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\lineclear2.wav");
-            lineClear3 = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\lineclear3.wav");
-            lineClear4 = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\lineclear4.wav");
-            topOut     = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\topout.wav"    );
-            spin       = new SoundPlayer(Environment.CurrentDirectory + "\\sfx\\tspin.wav"     );
-            lineClear1.Load();
-            lineClear2.Load();
-            lineClear3.Load();
-            lineClear4.Load();
-            topOut    .Load();
-            spin      .Load();
+            toPlay = new bool[7];
+            lineClear1 = new MediaPlayer();
+            lineClear2 = new MediaPlayer();
+            lineClear3 = new MediaPlayer();
+            lineClear4 = new MediaPlayer();
+            topOut     = new MediaPlayer();
+            spin       = new MediaPlayer();
+            levelUp    = new MediaPlayer();
+            lineClear1.Open(new Uri(Environment.CurrentDirectory + "\\sfx\\lineclear1.wav"));
+            lineClear2.Open(new Uri(Environment.CurrentDirectory + "\\sfx\\lineclear2.wav"));
+            lineClear3.Open(new Uri(Environment.CurrentDirectory + "\\sfx\\lineclear3.wav"));
+            lineClear4.Open(new Uri(Environment.CurrentDirectory + "\\sfx\\lineclear4.wav"));
+            topOut    .Open(new Uri(Environment.CurrentDirectory + "\\sfx\\topout.wav"    ));
+            spin      .Open(new Uri(Environment.CurrentDirectory + "\\sfx\\tspin.wav"     ));
+            levelUp   .Open(new Uri(Environment.CurrentDirectory + "\\sfx\\levelup.wav"   ));
+        }
+        /// <summary>
+        /// Play a sound with an ID.
+        /// </summary>
+        /// <param name="id">0-3: lineClear1-4, 4: topOut, 5: spin, 6: levelUp</param>
+        public static void PlaySound(int id)
+        {
+            toPlay[id] = true;
+        }
+        public static void UpdateSound()
+        {
+            if(System.Threading.Thread.CurrentThread.ManagedThreadId == Program.mainThreadId)
+            {
+                for(int i = 0; i < toPlay.Length; i++)
+                {
+                    if (toPlay[i])
+                    {
+                        GetPlayer(i).Position = TimeSpan.Zero;
+                        GetPlayer(i).Play();
+                        toPlay[i] = false;
+                    }
+                }
+            }
+        }
+        private static ref MediaPlayer GetPlayer(int id)
+        {
+            switch (id)
+            {
+                case 0:
+                    return ref lineClear1;
+                case 1:
+                    return ref lineClear2;
+                case 2:
+                    return ref lineClear3;
+                case 3:    
+                    return ref lineClear4;
+                case 4:    
+                    return ref topOut;
+                case 5:    
+                    return ref spin;
+                default:    
+                    return ref levelUp;
+            }
         }
     }
 
