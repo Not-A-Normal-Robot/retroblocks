@@ -27,4 +27,3 @@ C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\retroblocks.pdb
 C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\retroblocks.genruntimeconfig.cache
 C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\retroblocks.csproj.AssemblyReference.cache
 C:\retroblocks\retroblocks\bin\Release\netcoreapp3.1\Colorful.Console.dll
-C:\retroblocks\retroblocks\obj\Release\netcoreapp3.1\retroblocks.csproj.CopyComplete
