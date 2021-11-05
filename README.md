@@ -4,6 +4,9 @@
 
 # Running
 Download this repo. The exe is located in /retroblocks/build/[platform]  
+Alternatively, use this link to download:
+x64: https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FNot-A-Normal-Robot%2Fretroblocks%2Ftree%2Fmain%2Fretroblocks%2Fbuild%2Fwin-x64
+x86: https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FNot-A-Normal-Robot%2Fretroblocks%2Ftree%2Fmain%2Fretroblocks%2Fbuild%2Fwin-x86
 Note: ARM builds are outdated and are not supported anymore.  
 The program shouldn't take too much resources (it's literally just cmd) so it should be fine to use Windows's ARM x64 emulation.
 
