@@ -50,7 +50,7 @@ namespace Menu
         /// <summary>
         /// cursorPos shouldn't go above this[menu]
         /// </summary>
-        static readonly int[] cursorLimits = new int[5] { 3, 12, 1, 0, 0 };
+        static readonly int[] cursorLimits = new int[5] { 3, 12, 2, 0, 0 };
         /// <summary>
         /// left, right, up, down, enter, escape
         /// </summary> 
@@ -123,8 +123,9 @@ namespace Menu
                             $"\n" +
                             $"{(cursorPos == 0 ? "> " : "  ")}ASCII compatibility mode: {(asciiMode ? "ON " : "OFF")}\n" +
                             $"Skin customization: coming soon!\n" +
+                            $"{(cursorPos == 1 ? "> " : "  ")}Font Size: {fontSize}\n" +
                             $"\n" +
-                            $"{(cursorPos == 1 ? "> " : "  ")}Exit"
+                            $"{(cursorPos == 2 ? "> " : "  ")}Exit"
                             );
                         break;
                     case 3:
@@ -258,6 +259,12 @@ namespace Menu
                         asciiMode = !asciiMode;
                         SaveConfig();
                     }
+                    else if (cursorPos == 1)
+                    {
+                        fontSize--;
+                        SaveConfig();
+                        ConsoleHelper.SetCurrentFont("Consolas", (short)fontSize);
+                    }
                     return;
             }
         }
@@ -294,6 +301,12 @@ namespace Menu
                     {
                         asciiMode = !asciiMode;
                         SaveConfig();
+                    }
+                    else if(cursorPos == 1)
+                    {
+                        fontSize++;
+                        SaveConfig();
+                        ConsoleHelper.SetCurrentFont("Consolas", (short)fontSize);
                     }
                     break;
                 default:
@@ -367,7 +380,7 @@ namespace Menu
                             return;
                     }
                 case 2:
-                    if (cursorPos == 1)
+                    if (cursorPos == 2)
                     {
                         menu = 0;
                     }

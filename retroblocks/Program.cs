@@ -50,9 +50,9 @@ namespace Game
                 Console.WriteLine("Loading Retroblocks\nPlease wait...");
                 Console.CursorVisible = false;
                 Config.LoadConfig();
-                ConsoleHelper.SetCurrentFont("Consolas", (short)Config.fontSize);
                 Console.SetWindowSize(50, 32);
                 Console.SetBufferSize(50, 32);
+                ConsoleHelper.SetCurrentFont("Consolas", (short)Config.fontSize);
                 DisableResize();
                 mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
                 #endregion
@@ -2879,7 +2879,7 @@ namespace Game
     }
     public class Levels
     {
-        private const bool debug = true;
+        private const bool debug = false;
         public double g;
         public int lockDelay;
         public int invisibleTimer;
@@ -2967,7 +2967,7 @@ namespace Game
                 if (debug)
                 {
                     #pragma warning disable CS0162
-                    list[i] = new Levels(0, 240, -1, 2, 2, false, true, 6, 20, 15);
+                    list[i] = new Levels(0, 30, 10, 2, 2, false, true, 6, 20, 15);
                     #pragma warning restore CS0162
                 }
             }

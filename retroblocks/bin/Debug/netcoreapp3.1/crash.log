@@ -1,16 +1,24 @@
-Exception occured at 10/28/2021 3:41:54 AM UTC (In current timezone: 10/28/2021 10:41:54 AM)
+Exception occured at 11/12/2021 1:06:30 PM UTC (In current timezone: 11/12/2021 8:06:30 PM)
 
 Message:
-Attempted to divide by zero.
+The new console window size would force the console buffer size to be too large. (Parameter 'height')
+Actual value was 32.
 
 Stack Trace:
-   at Game.Program.Main() in C:\retroblocks\retroblocks\Program.cs:line 55
+   at System.ConsolePal.SetWindowSize(Int32 width, Int32 height)
+   at System.Console.SetWindowSize(Int32 width, Int32 height)
+   at Colorful.Console.SetWindowSize(Int32 width, Int32 height)
+   at Game.Program.Main() in C:\retroblocks\retroblocks\Program.cs:line 54
 
 Source:
-retroblocks
+System.Console
 
 Data:System.Collections.ListDictionaryInternal
 
 String:
-System.DivideByZeroException: Attempted to divide by zero.
-   at Game.Program.Main() in C:\retroblocks\retroblocks\Program.cs:line 55
+System.ArgumentOutOfRangeException: The new console window size would force the console buffer size to be too large. (Parameter 'height')
+Actual value was 32.
+   at System.ConsolePal.SetWindowSize(Int32 width, Int32 height)
+   at System.Console.SetWindowSize(Int32 width, Int32 height)
+   at Colorful.Console.SetWindowSize(Int32 width, Int32 height)
+   at Game.Program.Main() in C:\retroblocks\retroblocks\Program.cs:line 54
